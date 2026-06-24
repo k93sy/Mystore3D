@@ -415,6 +415,13 @@ const AuthService = {
         .eq('id', user.id);
       if (error) return { ok: false, error: this._mapError(error) };
     } else {
+      // Update the live users record so getUser() doesn't overwrite the changes on next load
+      const users = this._localUsers();
+      const idx = users.findIndex(u => u.id === user.id);
+      if (idx >= 0) {
+        users[idx] = { ...users[idx], ...data };
+        this._saveLocalUsers(users);
+      }
       _localSetUser({ ...user, ...data });
     }
     return { ok: true, message: _t('auth.success.profile_updated', 'Profile updated') };

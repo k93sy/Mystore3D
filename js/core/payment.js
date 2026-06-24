@@ -314,26 +314,28 @@ const PaymentService = {
       </div>
 
       <div class="pay-card-form" id="payCardForm">
-        <div class="pay-field">
-          <label class="pay-label">${isAr ? '\u0631\u0642\u0645 \u0627\u0644\u0628\u0637\u0627\u0642\u0629' : 'Card Number'}</label>
-          <input class="pay-input" id="demoCardNum" type="text" maxlength="19"
-                 placeholder="4111 1111 1111 1111" inputmode="numeric" autocomplete="cc-number"/>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-          <div class="pay-field">
-            <label class="pay-label">${isAr ? '\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0627\u0646\u062a\u0647\u0627\u0621' : 'Expiry'}</label>
-            <input class="pay-input" id="demoExpiry" type="text" placeholder="MM / YY" maxlength="7" autocomplete="cc-exp"/>
-          </div>
-          <div class="pay-field">
-            <label class="pay-label">CVV</label>
-            <input class="pay-input" id="demoCvv" type="text" maxlength="4" placeholder="\u2022\u2022\u2022" autocomplete="cc-csc" inputmode="numeric"/>
-          </div>
-        </div>
-        <div class="pay-field">
-          <label class="pay-label">${isAr ? '\u0627\u0633\u0645 \u062d\u0627\u0645\u0644 \u0627\u0644\u0628\u0637\u0627\u0642\u0629' : 'Cardholder Name'}</label>
-          <input class="pay-input" id="demoName" type="text" autocomplete="cc-name"
-                 placeholder="${isAr ? '\u0627\u0644\u0627\u0633\u0645 \u0643\u0645\u0627 \u064a\u0638\u0647\u0631 \u0639\u0644\u0649 \u0627\u0644\u0628\u0637\u0627\u0642\u0629' : 'Name as on card'}"/>
-        </div>
+        ${typeof CreditCardForm !== 'undefined'
+          ? CreditCardForm.render('demo', isAr)
+          : `<div class="pay-field">
+               <label class="pay-label">${isAr ? '\u0631\u0642\u0645 \u0627\u0644\u0628\u0637\u0627\u0642\u0629' : 'Card Number'}</label>
+               <input class="pay-input" id="demoNum" type="tel" maxlength="19"
+                      placeholder="4111 1111 1111 1111" inputmode="numeric" autocomplete="cc-number"/>
+             </div>
+             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+               <div class="pay-field">
+                 <label class="pay-label">${isAr ? '\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0627\u0646\u062a\u0647\u0627\u0621' : 'Expiry'}</label>
+                 <input class="pay-input" id="demoExpiry" type="text" placeholder="MM / YY" maxlength="7" autocomplete="cc-exp"/>
+               </div>
+               <div class="pay-field">
+                 <label class="pay-label">CVV</label>
+                 <input class="pay-input" id="demoCvv" type="password" maxlength="4" placeholder="\u2022\u2022\u2022" autocomplete="cc-csc" inputmode="numeric"/>
+               </div>
+             </div>
+             <div class="pay-field">
+               <label class="pay-label">${isAr ? '\u0627\u0633\u0645 \u062d\u0627\u0645\u0644 \u0627\u0644\u0628\u0637\u0627\u0642\u0629' : 'Cardholder Name'}</label>
+               <input class="pay-input" id="demoName" type="text" autocomplete="cc-name"
+                      placeholder="${isAr ? '\u0627\u0644\u0627\u0633\u0645 \u0643\u0645\u0627 \u064a\u0638\u0647\u0631 \u0639\u0644\u0649 \u0627\u0644\u0628\u0637\u0627\u0642\u0629' : 'Name as on card'}"/>
+             </div>`}
       </div>
 
       <div class="pay-total-row">
@@ -355,16 +357,11 @@ const PaymentService = {
         ${isAr ? '\u062c\u0645\u064a\u0639 \u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0627\u062a \u0645\u0634\u0641\u0631\u0629 \u0648\u0645\u0624\u0645\u0651\u0646\u0629 \u0628\u0640 SSL' : 'All payments are SSL encrypted & secure'}
       </p>`;
 
-    el.querySelector('#demoCardNum')?.addEventListener('input', e => {
-      let v = e.target.value.replace(/\D/g, '').slice(0, 16);
-      e.target.value = v.replace(/(\d{4})(?=\d)/g, '$1 ');
-    });
-
-    el.querySelector('#demoExpiry')?.addEventListener('input', e => {
-      let v = e.target.value.replace(/\D/g, '').slice(0, 4);
-      if (v.length > 2) v = v.slice(0, 2) + ' / ' + v.slice(2);
-      e.target.value = v;
-    });
+    /* ── Wire up CreditCardForm (brand icon, formatting, validation) ── */
+    if (typeof CreditCardForm !== 'undefined') {
+      const ccForm = el.querySelector('.cc-form');
+      if (ccForm) CreditCardForm.init(ccForm);
+    }
 
     const payBtnLabels = {
       ar: { creditcard: '\u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u062f\u0641\u0639',
@@ -394,12 +391,24 @@ const PaymentService = {
     });
 
     el.querySelector('#demoPayBtn')?.addEventListener('click', async () => {
+      /* ── Validate credit card fields before proceeding ── */
+      const activeMethod = el.querySelector('.pay-method-btn.active')?.dataset.method || 'creditcard';
+      if (activeMethod === 'creditcard' && typeof CreditCardForm !== 'undefined') {
+        const ccForm = el.querySelector('.cc-form');
+        if (ccForm) {
+          const result = CreditCardForm.validate(ccForm, isAr);
+          if (!result.valid) {
+            /* Scroll to the card form so errors are visible */
+            ccForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return;
+          }
+        }
+      }
+
       const payBtn = el.querySelector('#demoPayBtn');
       if (payBtn) { payBtn.disabled = true; payBtn.classList.add('pay-submit-btn--loading'); }
       await new Promise(r => setTimeout(r, 1600));
       const demoTxnId = 'demo_' + Date.now();
-      // Detect which payment method is currently selected
-      const activeMethod = el.querySelector('.pay-method-btn.active')?.dataset.method || 'creditcard';
       // Cash on Delivery is not paid online — use 'cod' status so admin shows
       // "pending payment" and the success page shows the correct COD message.
       const payStatus = (activeMethod === 'cash') ? 'cod' : 'paid';

@@ -252,6 +252,12 @@
       errRequired:  'مطلوب',
       errEmail:     'بريد إلكتروني غير صالح',
       errPhone:     'أدخل رقم جوال صحيح (مثال: 0512345678)',
+      contactName:  'الاسم الكامل',
+      contactEmail: 'البريد الإلكتروني',
+      contactPhone: 'رقم الجوال',
+      contactEdit:  'تعديل البيانات',
+      phoneMissing: 'رقم الجوال غير مضاف — مطلوب للتوصيل',
+      phoneAddLink: 'أضفه من إعدادات حسابك',
       summary:      'ملخص الطلب',
       items:        'عنصر',
       subtotal:     'المجموع الفرعي',
@@ -321,6 +327,12 @@
       errRequired:  'Required',
       errEmail:     'Invalid email address',
       errPhone:     'Enter a valid phone number (e.g. 0512345678)',
+      contactName:  'Full Name',
+      contactEmail: 'Email Address',
+      contactPhone: 'Phone Number',
+      contactEdit:  'Edit My Info',
+      phoneMissing: 'Phone number not saved — required for delivery',
+      phoneAddLink: 'Add it in Account Settings',
       summary:      'Order Summary',
       items:        'item(s)',
       subtotal:     'Subtotal',
@@ -678,39 +690,49 @@
     const lastName  = $('lastName').value.trim();
     const email     = $('email').value.trim();
     const phone     = $('phone').value.trim();
-    let valid = true;
 
-    if (!firstName) {
-      showErr('firstNameErr', 'firstNameErrMsg', t('errRequired'));
-      $('firstName').classList.add('error'); valid = false;
+    /* When contact step is pre-filled from account, skip manual validation.
+       Phone presence is still required (button would be disabled by prefillFromSession
+       if phone is missing, but we guard here too as a safety net). */
+    if (_contactPrefilled) {
+      if (!phone) {
+        /* Redirect to account settings if phone is still missing */
+        const acctUrl = (typeof App !== 'undefined' && App._layoutBase === 'pages/')
+          ? 'pages/account.html#profile' : 'account.html#profile';
+        if (typeof Toast !== 'undefined') {
+          Toast.show(isAr()
+            ? 'يرجى إضافة رقم الجوال أولاً في إعدادات حسابك'
+            : 'Please add your phone number in account settings first', 'error');
+        }
+        return;
+      }
+      /* Pre-filled data is trusted — skip re-validation */
     } else {
-      hideErr('firstNameErr'); $('firstName').classList.remove('error');
+      /* Guest / manual-entry flow: validate all fields */
+      let valid = true;
+      if (!firstName) {
+        showErr('firstNameErr', 'firstNameErrMsg', t('errRequired'));
+        $('firstName').classList.add('error'); valid = false;
+      } else { hideErr('firstNameErr'); $('firstName').classList.remove('error'); }
+      if (!lastName) {
+        showErr('lastNameErr', 'lastNameErrMsg', t('errRequired'));
+        $('lastName').classList.add('error'); valid = false;
+      } else { hideErr('lastNameErr'); $('lastName').classList.remove('error'); }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showErr('emailErr', 'emailErrMsg', t('errEmail'));
+        $('email').classList.add('error'); valid = false;
+      } else { hideErr('emailErr'); $('email').classList.remove('error'); }
+      const phoneClean = phone.replace(/[\s\-().]/g, '');
+      const phoneValid = phoneClean.length >= 9 && /^(\+?966|0)?5\d{8}$/.test(phoneClean);
+      if (!phone) {
+        showErr('phoneErr', 'phoneErrMsg', t('errRequired'));
+        $('phone').classList.add('error'); valid = false;
+      } else if (!phoneValid) {
+        showErr('phoneErr', 'phoneErrMsg', t('errPhone'));
+        $('phone').classList.add('error'); valid = false;
+      } else { hideErr('phoneErr'); $('phone').classList.remove('error'); }
+      if (!valid) return;
     }
-    if (!lastName) {
-      showErr('lastNameErr', 'lastNameErrMsg', t('errRequired'));
-      $('lastName').classList.add('error'); valid = false;
-    } else {
-      hideErr('lastNameErr'); $('lastName').classList.remove('error');
-    }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      showErr('emailErr', 'emailErrMsg', t('errEmail'));
-      $('email').classList.add('error'); valid = false;
-    } else {
-      hideErr('emailErr'); $('email').classList.remove('error');
-    }
-    /* Phone: required, accept formats like 05xxxxxxxx or +9665xxxxxxxx */
-    const phoneClean = phone.replace(/[\s\-().]/g, '');
-    const phoneValid = phoneClean.length >= 9 && /^(\+?966|0)?5\d{8}$/.test(phoneClean);
-    if (!phone) {
-      showErr('phoneErr', 'phoneErrMsg', t('errRequired'));
-      $('phone').classList.add('error'); valid = false;
-    } else if (!phoneValid) {
-      showErr('phoneErr', 'phoneErrMsg', t('errPhone'));
-      $('phone').classList.add('error'); valid = false;
-    } else {
-      hideErr('phoneErr'); $('phone').classList.remove('error');
-    }
-    if (!valid) return;
 
     orderData.firstName = firstName;
     orderData.lastName  = lastName;
@@ -1059,22 +1081,104 @@
       </div>`;
   }
 
-  /* ---- Pre-fill from session if logged in ---- */
+  /* ---- Pre-fill from session — shows read-only display cards for logged-in users ---- */
+  let _contactPrefilled = false;   // set when we convert to read-only display
+
   async function prefillFromSession() {
     if (typeof AuthService === 'undefined') return;
     try {
       const user = await AuthService.getUser();
       if (!user) return;
-      const firstField = $('firstName');
-      const lastField  = $('lastName');
-      const emailField = $('email');
-      const phoneField = $('phone');
-      const fn = user.firstName || user.first_name || (user.name_en || user.nameEn || '').split(' ')[0] || '';
-      const ln = user.lastName  || user.last_name  || (user.name_en || user.nameEn || '').split(' ').slice(1).join(' ') || '';
-      if (firstField && !firstField.value && fn) firstField.value = fn;
-      if (lastField  && !lastField.value  && ln) lastField.value  = ln;
-      if (emailField && !emailField.value && user.email) emailField.value = user.email;
-      if (phoneField && !phoneField.value && user.phone) phoneField.value = user.phone;
+
+      /* Resolve name, email, phone from user profile */
+      const fn    = user.firstName || user.first_name || (user.name_en || user.nameEn || '').split(' ')[0] || '';
+      const ln    = user.lastName  || user.last_name  || (user.name_en || user.nameEn || '').split(' ').slice(1).join(' ') || '';
+      const fullName = (fn + (ln ? ' ' + ln : '')).trim() || user.email?.split('@')[0] || '';
+      const email    = user.email || '';
+      const phone    = user.phone || user.phone_number || '';
+
+      /* Keep hidden inputs populated so step 1→2 handler still reads values */
+      const set = (id, val) => { const el = $(id); if (el) el.value = val; };
+      set('firstName', fn); set('lastName', ln); set('email', email); set('phone', phone);
+
+      /* Build the account-settings link (handles both root and pages/ paths) */
+      const acctBase = (typeof App !== 'undefined' && App._layoutBase === 'pages/')
+        ? 'pages/account.html' : 'account.html';
+      const acctUrl  = acctBase + '#profile';
+
+      /* ── Replace the visible form with styled read-only display cards ── */
+      const formContact = $('formContact');
+      if (!formContact) return;
+
+      const row = (label, value, missing) => {
+        if (missing) {
+          return `<div class="co-readonly-field">
+            <div class="co-readonly-label">${_esc(label)}</div>
+            <div class="co-readonly-value co-readonly-value--missing">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.5" stroke-linecap="round" style="color:#f59e0b;flex-shrink:0">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <span>${_esc(t('phoneMissing'))} — <a href="${acctUrl}" style="color:var(--clr-primary);font-weight:600;text-decoration:underline">${_esc(t('phoneAddLink'))}</a></span>
+            </div>
+          </div>`;
+        }
+        return `<div class="co-readonly-field">
+          <div class="co-readonly-label">${_esc(label)}</div>
+          <div class="co-readonly-value">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" style="color:#059669;flex-shrink:0">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(value)}</span>
+          </div>
+        </div>`;
+      };
+
+      /* Inject styles once */
+      if (!document.getElementById('coReadonlyStyles')) {
+        const s = document.createElement('style');
+        s.id = 'coReadonlyStyles';
+        s.textContent = `
+          .co-readonly-field { margin-bottom:.75rem; }
+          .co-readonly-label { font-size:.78rem;font-weight:600;color:var(--clr-text-muted);margin-bottom:.28rem; }
+          .co-readonly-value {
+            display:flex;align-items:center;gap:.5rem;
+            padding:.6rem .85rem;
+            border-radius:var(--radius-sm,8px);
+            border:1.5px solid var(--clr-border);
+            background:var(--clr-surface-2,#f4f6fb);
+            font-size:.9rem;font-weight:500;color:var(--clr-text-primary);
+          }
+          .co-readonly-value--missing { border-color:#f59e0b;background:rgba(245,158,11,.06);font-size:.82rem; }
+          .co-readonly-edit-link { font-size:.76rem;color:var(--clr-text-muted);margin-top:.6rem;display:block;text-align:end; }
+          .co-readonly-edit-link a { color:var(--clr-primary);font-weight:600;text-decoration:underline; }
+        `;
+        document.head.appendChild(s);
+      }
+
+      formContact.innerHTML = `
+        ${row(t('contactName'),  fullName, !fullName)}
+        ${row(t('contactEmail'), email,    !email)}
+        ${phone
+          ? row(t('contactPhone'), phone, false)
+          : row(t('contactPhone'), '', true)}
+        <div class="co-readonly-edit-link">
+          <a href="${acctUrl}">${_esc(t('contactEdit'))}</a>
+        </div>`;
+
+      /* If phone is missing → disable the "next" button + show note in button area */
+      if (!phone) {
+        const nextBtn = $('btnContactNext');
+        if (nextBtn) {
+          nextBtn.disabled = true;
+          nextBtn.style.opacity = '.5';
+          nextBtn.title = isAr() ? 'أضف رقم الجوال أولاً' : 'Add phone number first';
+        }
+      }
+
+      _contactPrefilled = true;
     } catch (_) {}
   }
 

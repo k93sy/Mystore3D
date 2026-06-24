@@ -140,6 +140,7 @@ const AuthService = {
           full_name:      meta.firstName ? (meta.firstName + (meta.lastName ? ' ' + meta.lastName : '')) : (meta.nameEn || ''),
           first_name:     meta.firstName || meta.nameEn || '',
           last_name:      meta.lastName  || meta.nameAr || '',
+          phone:          meta.phone || '',
           preferred_lang: meta.lang || localStorage.getItem('b3d_lang') || 'ar',
         },
         emailRedirectTo: window.location.origin + '/pages/login.html',
@@ -577,6 +578,7 @@ const AuthService = {
       email,
       firstName: meta.firstName || meta.nameEn || '',
       lastName:  meta.lastName  || meta.nameAr || '',
+      phone:     meta.phone     || '',        // Fix 4: standardised phone field
       // keep legacy fields populated for getUser() display
       nameEn:    meta.firstName ? (meta.firstName + (meta.lastName ? ' ' + meta.lastName : '')) : (meta.nameEn || ''),
       nameAr:    meta.lastName  || meta.nameAr || '',

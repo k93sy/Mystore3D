@@ -79,6 +79,24 @@
         </div>
       </div>
 
+      <!-- Phone number — required, Saudi format -->
+      <div class="form-group">
+        <label class="form-label required" for="phone" id="lblPhone"></label>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <span style="padding:.58rem .75rem;border:1.5px solid var(--clr-border,#e2e5ec);
+                       border-radius:var(--radius-md,10px);font-size:.92rem;font-weight:600;
+                       color:var(--clr-text-muted,#6b7280);white-space:nowrap;
+                       background:var(--clr-surface-2,#f4f6fb);flex-shrink:0">+966</span>
+          <input type="tel" id="phone" class="form-input" autocomplete="tel"
+                 inputmode="numeric" placeholder="5XXXXXXXX" maxlength="9" dir="ltr"
+                 style="flex:1"/>
+        </div>
+        <span class="form-error" id="phoneErr" style="display:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
+          <span id="phoneErrMsg"></span>
+        </span>
+      </div>
+
       <div class="form-group">
         <label class="form-label required" for="email" id="lblEmail"></label>
         <input type="email" id="email" class="form-input" autocomplete="email" inputmode="email"/>
@@ -161,7 +179,7 @@
       formTitle:'إنشاء حساب جديد',
       subtitle:'لديك حساب بالفعل؟ <a href="login.html" style="color:var(--clr-accent);font-weight:600">تسجيل الدخول</a>',
       lblFirstName:'الاسم الأول',lblLastName:'اسم العائلة',
-      lblEmail:'البريد الإلكتروني',lblPassword:'كلمة المرور',
+      lblPhone:'رقم الجوال',lblEmail:'البريد الإلكتروني',lblPassword:'كلمة المرور',
       lblConfirm:'تأكيد كلمة المرور',
       pwHint:'٦ أحرف على الأقل',
       terms:'بالتسجيل توافق على <a href="#" style="color:var(--clr-accent)">الشروط والأحكام</a> و<a href="#" style="color:var(--clr-accent)">سياسة الخصوصية</a>',
@@ -171,7 +189,8 @@
       successTitle:'تم إنشاء حسابك!',
       successDesc:'تحقق من بريدك الإلكتروني لتأكيد حسابك.',
       successBtn:'تسجيل الدخول',
-      errRequired:'مطلوب',errEmail:'بريد إلكتروني غير صالح',
+      errRequired:'مطلوب',errPhone:'يرجى إدخال رقم جوال سعودي صحيح (مثال: 5XXXXXXXX)',
+      errEmail:'بريد إلكتروني غير صالح',
       errPwShort:'٦ أحرف على الأقل',errPwMatch:'كلمتا المرور غير متطابقتين',
     },
     en: {
@@ -181,7 +200,7 @@
       formTitle:'Create Account',
       subtitle:'Already have an account? <a href="login.html" style="color:var(--clr-accent);font-weight:600">Sign In</a>',
       lblFirstName:'First Name',lblLastName:'Last Name',
-      lblEmail:'Email Address',lblPassword:'Password',
+      lblPhone:'Phone Number',lblEmail:'Email Address',lblPassword:'Password',
       lblConfirm:'Confirm Password',
       pwHint:'Minimum 6 characters',
       terms:'By registering you agree to our <a href="#" style="color:var(--clr-accent)">Terms</a> and <a href="#" style="color:var(--clr-accent)">Privacy Policy</a>',
@@ -191,7 +210,8 @@
       successTitle:'Account Created!',
       successDesc:'Check your email to confirm your account.',
       successBtn:'Sign In',
-      errRequired:'Required',errEmail:'Invalid email address',
+      errRequired:'Required',errPhone:'Enter a valid Saudi mobile number (e.g. 5XXXXXXXX)',
+      errEmail:'Invalid email address',
       errPwShort:'Minimum 6 characters',errPwMatch:'Passwords do not match',
     },
   };
@@ -210,6 +230,7 @@
     $('formSubtitle').innerHTML  = t('subtitle');
     $('lblFirstName').textContent = t('lblFirstName');
     $('lblLastName').textContent  = t('lblLastName');
+    $('lblPhone').textContent     = t('lblPhone');
     $('lblEmail').textContent    = t('lblEmail');
     $('lblPassword').textContent = t('lblPassword');
     $('lblConfirm').textContent  = t('lblConfirm');
@@ -240,6 +261,7 @@
     e.preventDefault(); hideBanner();
     const firstName = $('firstName').value.trim();
     const lastName  = $('lastName').value.trim();
+    const phoneRaw  = $('phone').value.trim();
     const email  = $('email').value.trim();
     const pw     = $('password').value;
     const cpw    = $('confirmPw').value;
@@ -247,6 +269,18 @@
 
     if (!firstName) { showErr('firstNameErr','firstNameErrMsg',t('errRequired')); valid=false; } else hideErr('firstNameErr');
     if (!lastName)  { showErr('lastNameErr','lastNameErrMsg',t('errRequired'));   valid=false; } else hideErr('lastNameErr');
+
+    /* Phone: required, Saudi format — 9 digits starting with 5 */
+    const phoneDigits = phoneRaw.replace(/\D/g,'');
+    const phoneOk = phoneDigits.length === 9 && /^5\d{8}$/.test(phoneDigits);
+    if (!phoneRaw) {
+      showErr('phoneErr','phoneErrMsg',t('errRequired')); valid=false;
+    } else if (!phoneOk) {
+      showErr('phoneErr','phoneErrMsg',t('errPhone')); valid=false;
+    } else { hideErr('phoneErr'); }
+    /* Store with country code */
+    const phone = phoneOk ? '+966' + phoneDigits : '';
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('emailErr','emailErrMsg',t('errEmail')); valid=false; } else hideErr('emailErr');
     if (!pw || pw.length < 6) { showErr('passwordErr','passwordErrMsg',t('errPwShort')); valid=false; } else hideErr('passwordErr');
     if (pw !== cpw) { showErr('confirmErr','confirmErrMsg',t('errPwMatch')); valid=false; } else hideErr('confirmErr');
@@ -254,7 +288,7 @@
 
     const btn = $('registerBtn');
     btn.classList.add('btn--loading'); btn.disabled = true;
-    const res = await AuthService.signUpEmail(email, pw, { firstName, lastName, lang: getLang() });
+    const res = await AuthService.signUpEmail(email, pw, { firstName, lastName, phone, lang: getLang() });
     btn.classList.remove('btn--loading'); btn.disabled = false;
 
     if (!res.ok) { showBanner(res.error); return; }

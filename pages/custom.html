@@ -122,6 +122,20 @@
 
       <!-- Quote form -->
       <div class="quote-form-card">
+        <!-- Guest info banner — shown only when user is not logged in -->
+        <div id="guestPrintBanner" style="display:none;align-items:center;gap:.6rem;
+             background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.22);
+             border-radius:12px;padding:.6rem .9rem;margin-bottom:1.2rem;
+             font-size:.84rem;font-weight:600;color:#2563EB">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="guestPrintBannerMsg">يجب تسجيل الدخول لإرسال طلب الطباعة</span>
+        </div>
+
         <h3 data-i18n="custom.form.title">مواصفات الطباعة</h3>
 
         <div class="form-group">
@@ -201,6 +215,12 @@
         <div class="form-group">
           <label class="form-label required" for="quoteEmail" data-i18n="custom.form.email">البريد الإلكتروني</label>
           <input type="email" id="quoteEmail" class="form-input" autocomplete="email"/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required" for="quotePhone" data-i18n="custom.form.phone">رقم الجوال</label>
+          <input type="tel" id="quotePhone" class="form-input" autocomplete="tel"
+                 inputmode="tel" placeholder="05xxxxxxxx" dir="ltr"/>
         </div>
 
         <!-- Price estimate -->
@@ -304,26 +324,233 @@
   document.addEventListener('DOMContentLoaded', () => {
     CustomPage.init();
     Reveal.init();
+
+    const isAr = App.lang === 'ar';
+
+    /* ── Show guest info banner if not logged in; auto-fill if logged in ── */
+    if (typeof GuestAuth !== 'undefined') {
+      const banner    = document.getElementById('guestPrintBanner');
+      const bannerMsg = document.getElementById('guestPrintBannerMsg');
+      if (!GuestAuth.isLoggedIn() && banner) {
+        if (bannerMsg) bannerMsg.textContent = isAr
+          ? 'يجب تسجيل الدخول لإرسال طلب الطباعة'
+          : 'You must be logged in to submit a print request';
+        banner.style.display = 'flex';
+      } else if (GuestAuth.isLoggedIn() && typeof AuthService !== 'undefined') {
+        /* Pre-fill customer info fields from account and make them read-only */
+        AuthService.getUser().then(user => {
+          if (!user) return;
+          const fn    = user.firstName || user.first_name || (user.name_en || user.nameEn || '').split(' ')[0] || '';
+          const ln    = user.lastName  || user.last_name  || (user.name_en || user.nameEn || '').split(' ').slice(1).join(' ') || '';
+          const name  = (fn + (ln ? ' ' + ln : '')).trim();
+          const email = user.email || '';
+          const phone = user.phone || user.phone_number || '';
+
+          const setReadonly = (id, val) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value = val;
+            el.readOnly = true;
+            el.style.background = 'var(--clr-surface-2,#f4f6fb)';
+            el.style.color      = 'var(--clr-text-muted,#6b7280)';
+            el.style.cursor     = 'not-allowed';
+          };
+          setReadonly('quoteName',  name);
+          setReadonly('quoteEmail', email);
+          setReadonly('quotePhone', phone);
+
+          /* Show "data from your account" note above the fields */
+          const contactSection = document.getElementById('quoteName')?.closest('.form-group')?.parentElement;
+          if (contactSection) {
+            const note = document.createElement('div');
+            note.style.cssText = 'display:flex;align-items:center;gap:.4rem;font-size:.78rem;' +
+              'color:var(--clr-text-muted);margin-bottom:.6rem;padding:.4rem .6rem;' +
+              'background:rgba(5,150,105,.06);border-radius:8px;border:1px solid rgba(5,150,105,.18)';
+            note.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="#059669" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span style="color:#059669;font-weight:600">
+                ${isAr ? 'بيانات حسابك —' : 'From your account —'}
+              </span>
+              <a href="account.html#profile" style="color:var(--clr-primary);text-decoration:underline;font-weight:600">
+                ${isAr ? 'تعديل' : 'Edit'}
+              </a>`;
+            const nameGroup = document.getElementById('quoteName')?.closest('.form-group');
+            if (nameGroup) nameGroup.parentElement.insertBefore(note, nameGroup);
+          }
+        }).catch(() => {});
+      }
+    }
+
+    /* ── Restore form state saved before login redirect ── */
+    const savedState = localStorage.getItem('b3d_pending_print_request');
+    if (savedState && typeof GuestAuth !== 'undefined' && GuestAuth.isLoggedIn()) {
+      try {
+        const d = JSON.parse(savedState);
+        localStorage.removeItem('b3d_pending_print_request');
+
+        if (d.name)    { const el = document.getElementById('quoteName');    if (el) el.value = d.name; }
+        if (d.email)   { const el = document.getElementById('quoteEmail');   if (el) el.value = d.email; }
+        if (d.phone)   { const el = document.getElementById('quotePhone');   if (el) el.value = d.phone; }
+        if (d.color)   { const el = document.getElementById('quoteColor');   if (el) el.value = d.color; }
+        if (d.quality) { const el = document.getElementById('quoteQuality'); if (el) el.value = d.quality; }
+        if (d.qty)     { const el = document.getElementById('quoteQty');     if (el) el.value = d.qty; }
+        if (d.notes)   { const el = document.getElementById('quoteNotes');   if (el) el.value = d.notes; }
+        if (d.material) {
+          document.querySelectorAll('.material-option').forEach(opt => {
+            const active = opt.getAttribute('data-material') === d.material;
+            opt.classList.toggle('selected', active);
+            const radio = opt.querySelector('input[type="radio"]');
+            if (radio) radio.checked = active;
+          });
+          CustomPage.updatePriceEstimate();
+        }
+        if (typeof Toast !== 'undefined') {
+          Toast.show(isAr
+            ? 'تم استعادة بيانات النموذج — يمكنك الإرسال الآن ✓'
+            : 'Form data restored — you can submit now ✓', 'success');
+        }
+      } catch (_) {}
+    }
   });
 
+  /* ── Persistent file reference for the uploaded 3D file ── */
+  let _pendingFile = null;
+  let _pendingFileData = null;   // base64 data URL (small files only)
+
+  /* Patch CustomPage.handleFile to also store the file reference */
+  const _origHandleFile = CustomPage.handleFile.bind(CustomPage);
+  CustomPage.handleFile = function(file, selected, selectedName) {
+    _origHandleFile(file, selected, selectedName);
+    _pendingFile = file;
+    _pendingFileData = null;
+    /* Read as base64 only if small (≤ 400 KB raw), otherwise store metadata only */
+    if (file.size <= 409600) {
+      const reader = new FileReader();
+      reader.onload = e => { _pendingFileData = e.target.result; };
+      reader.readAsDataURL(file);
+    }
+  };
+
   function handleQuoteSubmit() {
-    const name = document.getElementById('quoteName');
-    const email = document.getElementById('quoteEmail');
-    if (!name.value.trim() || !email.value.trim()) {
-      App.toast(App.t('form.fillrequired') || 'يرجى ملء الحقول المطلوبة', 'error');
+    const isAr  = App.lang === 'ar';
+
+    /* ── Auth gate: guests must log in before submitting a print request ── */
+    if (typeof GuestAuth !== 'undefined' && !GuestAuth.isLoggedIn()) {
+      /* Save current form state so we can restore it after login */
+      const formState = {
+        name:     document.getElementById('quoteName')?.value     || '',
+        email:    document.getElementById('quoteEmail')?.value    || '',
+        phone:    document.getElementById('quotePhone')?.value    || '',
+        material: document.querySelector('.material-option.selected')?.getAttribute('data-material') || 'pla',
+        color:    document.getElementById('quoteColor')?.value    || 'white',
+        quality:  document.getElementById('quoteQuality')?.value  || 'standard',
+        qty:      document.getElementById('quoteQty')?.value      || '1',
+        notes:    document.getElementById('quoteNotes')?.value    || '',
+      };
+      try { localStorage.setItem('b3d_pending_print_request', JSON.stringify(formState)); } catch (_) {}
+
+      GuestAuth.showLoginPrompt(null, {
+        icon:    '🖨️',
+        title:   isAr ? 'لإرسال طلب الطباعة' : 'To Submit Print Request',
+        desc:    isAr ? 'يرجى تسجيل الدخول أو إنشاء حساب جديد أولاً'
+                      : 'Please sign in or create an account first',
+        dismiss: isAr ? '← العودة' : 'Go Back →',
+      });
       return;
     }
+
+    const name  = document.getElementById('quoteName')?.value.trim();
+    const email = document.getElementById('quoteEmail')?.value.trim();
+    const phone = document.getElementById('quotePhone')?.value.trim();
+
+    /* ── Validation ── */
+    if (!name || !email) {
+      App.toast(isAr ? 'يرجى إدخال الاسم والبريد الإلكتروني' : 'Please enter your name and email', 'error');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      App.toast(isAr ? 'بريد إلكتروني غير صالح' : 'Invalid email address', 'error');
+      return;
+    }
+    if (!phone) {
+      App.toast(isAr ? 'يرجى إدخال رقم الجوال' : 'Please enter your phone number', 'error');
+      return;
+    }
+
     const btn = document.getElementById('submitQuoteBtn');
     btn.classList.add('btn--loading');
     btn.disabled = true;
-    setTimeout(() => {
+
+    try {
+      /* ── Collect form values ── */
+      const materialEl = document.querySelector('.material-option.selected');
+      const material   = materialEl?.getAttribute('data-material') || 'pla';
+      const color      = document.getElementById('quoteColor')?.value   || 'white';
+      const quality    = document.getElementById('quoteQuality')?.value || 'standard';
+      const quantity   = parseInt(document.getElementById('quoteQty')?.value || 1, 10);
+      const notes      = document.getElementById('quoteNotes')?.value.trim() || '';
+
+      /* ── Try to get logged-in user info ── */
+      let customerId = null;
+      try {
+        const session = JSON.parse(localStorage.getItem('b3d_session') || 'null');
+        customerId = session?.user?.id || null;
+      } catch (_) {}
+
+      /* ── Build request object ── */
+      const requestId = 'CPR-' + Date.now();
+      const request   = {
+        requestId,
+        submittedAt:    new Date().toISOString(),
+        updatedAt:      new Date().toISOString(),
+        status:         'pending_review',   // admin will set the final price
+        isRead:         false,
+        customerId,
+        customerName:   name,
+        customerEmail:  email,
+        customerPhone:  phone,
+        material,
+        color,
+        quality,
+        quantity,
+        notes,
+        finalPrice:     null,   // set by admin only
+        adminNotes:     '',
+        fileName:       _pendingFile?.name  || null,
+        fileType:       _pendingFile ? _pendingFile.name.split('.').pop().toUpperCase() : null,
+        fileSize:       _pendingFile?.size  || null,
+        fileData:       _pendingFileData,   // base64 for small files, null for large
+      };
+
+      /* ── Save to localStorage (shared key read by admin DB) ── */
+      const list = JSON.parse(localStorage.getItem('b3d_custom_print_requests') || '[]');
+      list.unshift(request);
+      localStorage.setItem('b3d_custom_print_requests', JSON.stringify(list));
+
+      /* ── Reset form ── */
+      document.getElementById('quoteName').value  = '';
+      document.getElementById('quoteEmail').value = '';
+      document.getElementById('quotePhone').value = '';
+      document.getElementById('quoteNotes').value = '';
+      const fileSelected = document.getElementById('fileSelected');
+      if (fileSelected) fileSelected.classList.remove('show');
+      _pendingFile     = null;
+      _pendingFileData = null;
+
       btn.classList.remove('btn--loading');
       btn.disabled = false;
-      App.toast(App.t('custom.success') || 'تم إرسال طلبك! سنتواصل معك قريباً.', 'success');
-      document.getElementById('quoteName').value = '';
-      document.getElementById('quoteEmail').value = '';
-      document.getElementById('quoteNotes').value = '';
-    }, 1800);
+      App.toast(isAr
+        ? `تم إرسال طلبك بنجاح! رقم الطلب: ${requestId} — سنتواصل معك قريباً 🎉`
+        : `Request submitted! ID: ${requestId} — We'll contact you soon 🎉`,
+        'success');
+
+    } catch (err) {
+      btn.classList.remove('btn--loading');
+      btn.disabled = false;
+      App.toast((isAr ? 'فشل الإرسال: ' : 'Submission failed: ') + err.message, 'error');
+    }
   }
 </script>
 </body>

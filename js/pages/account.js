@@ -158,6 +158,39 @@ const TX = {
 
     orderItems: n => n === 1 ? 'منتج واحد' : `${n} منتجات`,
     sar: 'ر.س',
+
+    navCustomPrints:        'طلبات الطباعة',
+    customPrintsHeading:    'طلبات الطباعة المخصصة',
+    customPrintsSub:        'تتبع طلبات الطباعة ثلاثية الأبعاد المخصصة',
+    cardTitleCustomPrints:  'سجل طلبات الطباعة',
+    emptyCustomPrintsTitle: 'لا توجد طلبات طباعة بعد',
+    emptyCustomPrintsDesc:  'قدّم طلبك الأول من صفحة الطباعة المخصصة',
+    goCustom:               'اطلب طباعة مخصصة',
+    cpStatusPendingReview:  'بانتظار المراجعة',
+    cpStatusAwaitingCust:   'بانتظار موافقتك',
+    cpStatusPrinting:       'قيد الطباعة',
+    cpStatusReadyShip:      'جاهز للشحن',
+    cpStatusDelivered:      'تم التوصيل',
+    cpStatusCancelled:      'ملغي',
+    cpPendingHint:          'سيتم إرسال السعر النهائي قريباً',
+    cpFinalPrice:           'السعر النهائي',
+    cpCompletePayment:      'إتمام الدفع',
+    cpCancelRequest:        'إلغاء الطلب',
+    cpCancelConfirm:        'هل أنت متأكد من إلغاء طلب الطباعة؟',
+    cpMaterial:             'المادة',
+    cpQuantity:             'الكمية',
+    cpFile:                 'الملف',
+    cpCheckoutTitle:        'إتمام دفع طلب الطباعة',
+    cpSelectAddress:        'عنوان التوصيل',
+    cpNewAddress:           'إدخال عنوان جديد',
+    cpAddrStreet:           'عنوان الشارع',
+    cpAddrDistrict:         'الحي',
+    cpAddrCity:             'المدينة',
+    cpPayMethod:            'طريقة الدفع',
+    cpPayCash:              'الدفع عند الاستلام',
+    cpPayCard:              'بطاقة ائتمانية',
+    cpConfirmPay:           'تأكيد الدفع وإرسال الطلب',
+    cpOrderCreated:         'تم إنشاء طلبك بنجاح! سيبدأ الطباعة قريباً 🎉',
   },
   en: {
     profileHeading:    'Account Information',
@@ -306,6 +339,39 @@ const TX = {
 
     orderItems: n => n === 1 ? '1 item' : `${n} items`,
     sar: 'SAR',
+
+    navCustomPrints:        'Print Requests',
+    customPrintsHeading:    'Custom Print Requests',
+    customPrintsSub:        'Track your custom 3D print orders',
+    cardTitleCustomPrints:  'Print Request History',
+    emptyCustomPrintsTitle: 'No print requests yet',
+    emptyCustomPrintsDesc:  'Submit your first request from the Custom Printing page',
+    goCustom:               'Request Custom Print',
+    cpStatusPendingReview:  'Pending Review',
+    cpStatusAwaitingCust:   'Awaiting Your Approval',
+    cpStatusPrinting:       'Printing',
+    cpStatusReadyShip:      'Ready to Ship',
+    cpStatusDelivered:      'Delivered',
+    cpStatusCancelled:      'Cancelled',
+    cpPendingHint:          'The final price will be sent to you shortly',
+    cpFinalPrice:           'Final Price',
+    cpCompletePayment:      'Complete Payment',
+    cpCancelRequest:        'Cancel Request',
+    cpCancelConfirm:        'Are you sure you want to cancel this print request?',
+    cpMaterial:             'Material',
+    cpQuantity:             'Qty',
+    cpFile:                 'File',
+    cpCheckoutTitle:        'Complete Custom Print Payment',
+    cpSelectAddress:        'Delivery Address',
+    cpNewAddress:           'Enter new address',
+    cpAddrStreet:           'Street Address',
+    cpAddrDistrict:         'District',
+    cpAddrCity:             'City',
+    cpPayMethod:            'Payment Method',
+    cpPayCash:              'Cash on Delivery',
+    cpPayCard:              'Credit Card',
+    cpConfirmPay:           'Confirm Payment & Submit Order',
+    cpOrderCreated:         'Order created successfully! Printing starts soon 🎉',
   },
 };
 
@@ -418,6 +484,7 @@ const AccountPage = {
     this._loadOrders();
     this._loadAddresses();
     this._loadPayments();
+    this._loadCustomPrints();
 
     // Register as the current page so App.applyLang() re-renders us on language change
     window.currentPage = {
@@ -428,6 +495,7 @@ const AccountPage = {
         AccountPage._loadOrders();
         AccountPage._loadAddresses();
         AccountPage._loadPayments();
+        AccountPage._loadCustomPrints();
       },
     };
   },
@@ -458,13 +526,14 @@ const AccountPage = {
 
     ids.forEach(id => setText(id, t(id)));
 
-    setText('navLabelProfile',   t('navProfile'));
-    setText('navLabelSecurity',  t('navSecurity'));
-    setText('navLabelOrders',    t('navOrders'));
-    setText('navLabelAddresses', t('navAddresses'));
-    setText('navLabelPayments',  t('navPayments'));
-    setText('navLabelSettings',  t('navSettings'));
-    setText('navLabelLogout',    t('navLogout'));
+    setText('navLabelProfile',     t('navProfile'));
+    setText('navLabelSecurity',    t('navSecurity'));
+    setText('navLabelOrders',      t('navOrders'));
+    setText('navLabelCustomPrints',t('navCustomPrints'));
+    setText('navLabelAddresses',   t('navAddresses'));
+    setText('navLabelPayments',    t('navPayments'));
+    setText('navLabelSettings',    t('navSettings'));
+    setText('navLabelLogout',      t('navLogout'));
 
     setText('btnSaveProfile', t('btnSaveProfile'));
     setText('btnSavePass',    t('btnSavePass'));
@@ -476,6 +545,9 @@ const AccountPage = {
     setText('shopNowBtn',     t('shopNow'));
     setText('emptyOrdersTitle',t('emptyOrdersTitle'));
     setText('emptyOrdersDesc', t('emptyOrdersDesc'));
+    setText('customPrintsHeading',   t('customPrintsHeading'));
+    setText('customPrintsSub',       t('customPrintsSub'));
+    setText('cardTitleCustomPrints', t('cardTitleCustomPrints'));
 
     // Direction
     document.documentElement.lang = _lang;
@@ -890,6 +962,579 @@ const AccountPage = {
         ${discountBadge}
         ${footerHtml}
       </div>`;
+  },
+
+  /* ── Custom Print Requests ── */
+  _loadCustomPrints() {
+    const body = $('customPrintsBody');
+    if (!body) return;
+
+    const email = _user?.email;
+    let requests = [];
+    try {
+      requests = JSON.parse(localStorage.getItem('b3d_custom_print_requests') || '[]');
+    } catch (_) { requests = []; }
+
+    if (email) {
+      requests = requests.filter(r => !r.customerEmail || r.customerEmail === email);
+    }
+
+    if (!requests.length) {
+      body.innerHTML = `
+        <div class="acc-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          <div class="acc-empty__title">${t('emptyCustomPrintsTitle')}</div>
+          <div class="acc-empty__desc">${t('emptyCustomPrintsDesc')}</div>
+          <a href="custom.html" class="acc-btn acc-btn--primary">${t('goCustom')}</a>
+        </div>`;
+      return;
+    }
+
+    /* ── Status helpers ── */
+    const statusLabel = s => ({
+      pending_review:    t('cpStatusPendingReview'),
+      awaiting_customer: t('cpStatusAwaitingCust'),
+      printing:          t('cpStatusPrinting'),
+      ready_to_ship:     t('cpStatusReadyShip'),
+      delivered:         t('cpStatusDelivered'),
+      cancelled:         t('cpStatusCancelled'),
+    }[s] || s);
+
+    const statusStyle = s => ({
+      pending_review:    'background:rgba(59,130,246,.1);color:#2563EB',
+      awaiting_customer: 'background:rgba(249,115,22,.1);color:#EA580C',
+      printing:          'background:rgba(14,165,233,.1);color:#0284C7',
+      ready_to_ship:     'background:rgba(139,92,246,.1);color:#7C3AED',
+      delivered:         'background:rgba(5,150,105,.1);color:#059669',
+      cancelled:         'background:rgba(239,68,68,.1);color:#DC2626',
+    }[s] || '');
+
+    const matLabel = m => ({ pla:'PLA',abs:'ABS',petg:'PETG',resin:'Resin',nylon:'Nylon',tpu:'TPU' }[m] || m);
+
+    const sorted = [...requests].sort((a,b) => new Date(b.submittedAt||0) - new Date(a.submittedAt||0));
+
+    body.innerHTML = `<div class="order-list">${sorted.map(r => {
+      const date        = r.submittedAt
+        ? new Date(r.submittedAt).toLocaleDateString(_lang==='ar'?'ar-SA':'en-GB') : '—';
+      const isPending   = r.status === 'pending_review';
+      const isAwaiting  = r.status === 'awaiting_customer';
+      const cancellable = isPending || isAwaiting;
+      const isCancelled = r.status === 'cancelled';
+
+      /* ── Price row (only when admin has set final price) ── */
+      const priceRow = (isAwaiting && r.finalPrice)
+        ? `<div style="display:flex;align-items:center;justify-content:space-between;
+                       padding:var(--space-3) var(--space-5);
+                       background:rgba(249,115,22,.06);border-top:1px solid rgba(249,115,22,.15)">
+             <span style="font-size:.85rem;font-weight:600">${t('cpFinalPrice')}</span>
+             <strong style="font-size:1.05rem;color:#EA580C">${r.finalPrice.toFixed(0)} ${t('sar')}</strong>
+           </div>` : '';
+
+      /* ── Hint for pending_review ── */
+      const pendingHint = isPending
+        ? `<div style="padding:var(--space-2) var(--space-5);font-size:.78rem;
+                       color:var(--clr-text-muted);font-style:italic">${t('cpPendingHint')}</div>`
+        : '';
+
+      /* ── Action buttons ── */
+      const actions = [
+        isAwaiting ? `<button type="button" class="acc-btn acc-btn--primary acc-btn--sm"
+                               data-cpr-pay="${r.requestId}" style="font-size:.82rem;gap:.4rem">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2.5" stroke-linecap="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        ${t('cpCompletePayment')}
+                      </button>` : '',
+        cancellable && !isCancelled
+          ? `<button type="button" class="acc-btn acc-btn--outline acc-btn--sm"
+                      data-cancel-cpr="${r.requestId}" style="font-size:.78rem;color:var(--clr-error)">
+               ${t('cpCancelRequest')}
+             </button>` : '',
+      ].filter(Boolean).join('');
+
+      return `
+        <div class="order-card" data-cpr-id="${r.requestId}">
+          <div class="order-card__head">
+            <div>
+              <div class="order-card__id" style="display:flex;align-items:center;gap:.4rem">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round">
+                  <polyline points="6 9 6 2 18 2 18 9"/>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                  <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                ${r.requestId}
+              </div>
+              <div class="order-card__date">${date}</div>
+            </div>
+            <span class="order-status" style="${statusStyle(r.status)}">${statusLabel(r.status)}</span>
+          </div>
+          <div class="order-card__body" style="flex-direction:column;align-items:flex-start;gap:4px;padding-bottom:var(--space-3)">
+            <div style="font-size:.83rem"><strong>${t('cpMaterial')}:</strong> ${matLabel(r.material)}</div>
+            <div style="font-size:.83rem"><strong>${t('cpQuantity')}:</strong> ${r.quantity||1}</div>
+            ${r.fileName ? `<div style="font-size:.76rem;color:var(--clr-text-muted)">${t('cpFile')}: ${r.fileName}</div>` : ''}
+          </div>
+          ${pendingHint}
+          ${priceRow}
+          ${actions ? `<div style="padding:var(--space-2) var(--space-4) var(--space-3);
+                                   display:flex;gap:var(--space-2);flex-wrap:wrap;
+                                   border-top:1px solid var(--clr-border)">${actions}</div>` : ''}
+        </div>`;
+    }).join('')}</div>`;
+
+    /* ── Wire "إتمام الدفع" buttons ── */
+    body.querySelectorAll('[data-cpr-pay]').forEach(btn => {
+      btn.addEventListener('click', () => this._openCustomPrintCheckout(btn.dataset.cprPay));
+    });
+
+    /* ── Wire cancel buttons ── */
+    body.querySelectorAll('[data-cancel-cpr]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rid = btn.dataset.cancelCpr;
+        if (!confirm(t('cpCancelConfirm'))) return;
+        try {
+          const list = JSON.parse(localStorage.getItem('b3d_custom_print_requests') || '[]');
+          const idx  = list.findIndex(r => r.requestId === rid);
+          if (idx >= 0) {
+            list[idx].status    = 'cancelled';
+            list[idx].updatedAt = new Date().toISOString();
+            localStorage.setItem('b3d_custom_print_requests', JSON.stringify(list));
+          }
+        } catch (_) {}
+        this._loadCustomPrints();
+      });
+    });
+  },
+
+  /* ── Checkout modal for custom print requests ── */
+  /* ── Dynamically load Leaflet if not already on page ── */
+  _ensureLeaflet(callback) {
+    if (typeof L !== 'undefined') { callback(); return; }
+    if (!document.getElementById('leafletCssAcc')) {
+      const link = Object.assign(document.createElement('link'), {
+        id: 'leafletCssAcc', rel: 'stylesheet', crossOrigin: 'anonymous',
+        href: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+      });
+      document.head.appendChild(link);
+    }
+    if (!document.getElementById('leafletJsAcc')) {
+      const script = Object.assign(document.createElement('script'), {
+        id: 'leafletJsAcc', crossOrigin: 'anonymous',
+        src: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+      });
+      script.onload  = callback;
+      script.onerror = () => { console.warn('[Account] Leaflet failed to load'); callback(); };
+      document.head.appendChild(script);
+    }
+  },
+
+  _openCustomPrintCheckout(requestId) {
+    const isAr = _lang === 'ar';
+    let req = null;
+    try {
+      req = JSON.parse(localStorage.getItem('b3d_custom_print_requests') || '[]')
+        .find(r => r.requestId === requestId);
+    } catch (_) {}
+    if (!req || !req.finalPrice) return;
+
+    const savedAddresses = AddressStore.all();
+    const matLabel = m => ({ pla:'PLA', abs:'ABS', petg:'PETG', resin:'Resin', nylon:'Nylon', tpu:'TPU' }[m] || m);
+
+    /* ── Map coordinates (set when customer pins location or uses geolocation) ── */
+    const _mapState = { lat: 24.7136, lng: 46.6753, moved: false };
+
+    /* ── Saved address cards ── */
+    const savedAddrCards = savedAddresses.length
+      ? savedAddresses.map((a, i) =>
+          `<label class="cpr-addr-opt" style="display:flex;align-items:flex-start;gap:.6rem;
+                  padding:.6rem .8rem;border:1.5px solid var(--clr-border);border-radius:10px;
+                  cursor:pointer;transition:border-color .15s">
+             <input type="radio" name="cprAddrSel" value="saved_${i}"
+                    ${a.isDefault || i === 0 ? 'checked' : ''} style="margin-top:3px;flex-shrink:0">
+             <div>
+               <div style="font-weight:600;font-size:.85rem">${a.label || a.city || ''}</div>
+               <div style="font-size:.77rem;color:var(--clr-text-muted)">${[a.street,a.district,a.city].filter(Boolean).join('، ')}</div>
+               ${a.phone ? `<div style="font-size:.74rem;color:var(--clr-text-muted)" dir="ltr">${a.phone}</div>` : ''}
+             </div>
+           </label>`).join('') + `
+        <label class="cpr-addr-opt" style="display:flex;align-items:center;gap:.6rem;
+               padding:.6rem .8rem;border:1.5px solid var(--clr-border);border-radius:10px;
+               cursor:pointer;transition:border-color .15s">
+          <input type="radio" name="cprAddrSel" value="new" style="flex-shrink:0">
+          <span style="font-size:.85rem;font-weight:600">
+            ${isAr ? '+ إضافة عنوان جديد' : '+ New Address'}
+          </span>
+        </label>`
+      : '';   // no saved addresses — show new-address form directly
+
+    const showNewAddrForm = !savedAddresses.length;
+
+    /* ── Remove any stale checkout modal ── */
+    document.getElementById('cprCheckoutModal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'cprCheckoutModal';
+    modal.style.cssText = `position:fixed;inset:0;z-index:9999;display:flex;align-items:center;
+      justify-content:center;padding:1rem;background:rgba(0,0,0,.52);backdrop-filter:blur(4px)`;
+
+    modal.innerHTML = `
+      <div id="cprInner" style="background:var(--clr-surface,#fff);border-radius:18px;
+                  padding:1.5rem;max-width:480px;width:100%;max-height:92dvh;
+                  overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.22)">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
+          <div style="font-weight:800;font-size:1rem">🖨️ ${t('cpCheckoutTitle')}</div>
+          <button id="cprCheckoutClose" type="button"
+                  style="background:none;border:none;font-size:1.25rem;cursor:pointer;
+                         color:var(--clr-text-muted);padding:.2rem;line-height:1">✕</button>
+        </div>
+
+        <!-- Order summary chip -->
+        <div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.22);
+                    border-radius:12px;padding:.75rem 1rem;margin-bottom:1.1rem">
+          <div style="font-size:.75rem;color:#EA580C;font-weight:700;margin-bottom:.3rem">
+            ${requestId} — ${matLabel(req.material)} × ${req.quantity||1}
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:.86rem;font-weight:600">${t('cpFinalPrice')}</span>
+            <strong style="font-size:1.1rem;color:#EA580C">${req.finalPrice.toFixed(0)} ${t('sar')}</strong>
+          </div>
+        </div>
+
+        <!-- ── ADDRESS SECTION ── -->
+        <div style="margin-bottom:1rem">
+          <div style="font-weight:700;font-size:.88rem;margin-bottom:.55rem">${t('cpSelectAddress')}</div>
+          ${savedAddrCards
+            ? `<div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.6rem"
+                    id="cprSavedAddrList">${savedAddrCards}</div>`
+            : ''}
+          <!-- New address form + map (shown when "new" radio selected or no saved addresses) -->
+          <div id="cprNewAddrSection" style="display:${showNewAddrForm ? 'block' : 'none'}">
+            <!-- Map (lazy-loaded) -->
+            <div style="position:relative;border-radius:10px;overflow:hidden;margin-bottom:.75rem;
+                        border:1px solid var(--clr-border);background:var(--clr-surface-2,#f4f6fb)">
+              <button id="cprUseLocBtn" type="button"
+                      style="position:absolute;top:.5rem;inset-inline-start:.5rem;z-index:500;
+                             background:#fff;border:1px solid var(--clr-border);border-radius:100px;
+                             padding:.35rem .75rem;font-size:.78rem;font-weight:600;cursor:pointer;
+                             box-shadow:0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;gap:.3rem;
+                             font-family:inherit">
+                📍 ${isAr ? 'موقعي الحالي' : 'My Location'}
+              </button>
+              <div id="cprMapDiv" style="height:220px;width:100%"></div>
+              <div style="padding:.35rem .6rem;font-size:.72rem;color:var(--clr-text-muted);
+                          background:var(--clr-surface-2,#f4f6fb);border-top:1px solid var(--clr-border)">
+                ${isAr ? '📍 اسحب الدبوس أو انقر على الخريطة لتحديد موقعك'
+                       : '📍 Drag the pin or click the map to set your location'}
+              </div>
+            </div>
+            <!-- Text fields auto-filled by reverse geocoding -->
+            <div style="display:grid;gap:.5rem">
+              <div>
+                <label style="font-size:.78rem;font-weight:600;margin-bottom:.25rem;display:block">${t('cpAddrStreet')} *</label>
+                <input id="cprAddrStreet" class="acc-input" type="text"
+                       placeholder="${isAr?'عنوان الشارع':'Street address'}"
+                       style="width:100%;padding:.5rem .7rem;border-radius:8px;border:1.5px solid var(--clr-border);font-family:inherit;font-size:.88rem"/>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.45rem">
+                <div>
+                  <label style="font-size:.78rem;font-weight:600;margin-bottom:.25rem;display:block">${t('cpAddrDistrict')}</label>
+                  <input id="cprAddrDistrict" class="acc-input" type="text"
+                         placeholder="${isAr?'الحي':'District'}"
+                         style="width:100%;padding:.5rem .7rem;border-radius:8px;border:1.5px solid var(--clr-border);font-family:inherit;font-size:.88rem"/>
+                </div>
+                <div>
+                  <label style="font-size:.78rem;font-weight:600;margin-bottom:.25rem;display:block">${t('cpAddrCity')} *</label>
+                  <input id="cprAddrCity" class="acc-input" type="text"
+                         placeholder="${isAr?'المدينة':'City'}"
+                         style="width:100%;padding:.5rem .7rem;border-radius:8px;border:1.5px solid var(--clr-border);font-family:inherit;font-size:.88rem"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PAYMENT SECTION ── -->
+        <div style="margin-bottom:1rem">
+          <div style="font-weight:700;font-size:.88rem;margin-bottom:.55rem">${t('cpPayMethod')}</div>
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            <label id="cprPayLabelCash" style="display:flex;align-items:center;gap:.6rem;
+                   padding:.5rem .8rem;border:1.5px solid var(--clr-primary,#0f766e);
+                   border-radius:10px;cursor:pointer">
+              <input type="radio" name="cprPay" value="cash" checked>
+              <span style="font-size:.86rem;font-weight:600">${t('cpPayCash')}</span>
+            </label>
+            <label id="cprPayLabelCard" style="display:flex;align-items:center;gap:.6rem;
+                   padding:.5rem .8rem;border:1.5px solid var(--clr-border);
+                   border-radius:10px;cursor:pointer">
+              <input type="radio" name="cprPay" value="credit_card">
+              <span style="font-size:.86rem;font-weight:600">${t('cpPayCard')}</span>
+            </label>
+          </div>
+          <!-- Credit card form (hidden until card radio selected) -->
+          <div id="cprCardFormWrap" style="display:none;margin-top:.75rem;padding:.85rem;
+               background:var(--clr-surface-2,#f4f6fb);border-radius:12px;
+               border:1px solid var(--clr-border)">
+            ${typeof CreditCardForm !== 'undefined' ? CreditCardForm.render('cprCc', isAr) : ''}
+          </div>
+        </div>
+
+        <!-- Confirm button -->
+        <button id="cprConfirmPayBtn" type="button"
+                style="width:100%;background:var(--clr-primary,#0f766e);color:#fff;border:none;
+                       border-radius:100px;padding:.82rem 1.25rem;font-size:.95rem;font-weight:700;
+                       cursor:pointer;transition:opacity .15s;font-family:inherit">
+          ${t('cpConfirmPay')}
+        </button>
+      </div>`;
+
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+
+    /* ── Close ── */
+    const _close = () => { modal.remove(); document.body.style.overflow = ''; };
+    modal.querySelector('#cprCheckoutClose').addEventListener('click', _close);
+    modal.addEventListener('click', e => { if (e.target === modal) _close(); });
+
+    /* ── Saved address card selection ── */
+    const savedAddrList = modal.querySelector('#cprSavedAddrList');
+    const newAddrSection = modal.querySelector('#cprNewAddrSection');
+    if (savedAddrList) {
+      savedAddrList.querySelectorAll('.cpr-addr-opt').forEach(opt => {
+        const radio = opt.querySelector('input[type="radio"]');
+        const _update = () => {
+          savedAddrList.querySelectorAll('.cpr-addr-opt').forEach(o =>
+            o.style.borderColor = 'var(--clr-border)');
+          if (radio?.checked) opt.style.borderColor = 'var(--clr-primary,#0f766e)';
+          if (newAddrSection) {
+            newAddrSection.style.display = (radio?.value === 'new') ? 'block' : 'none';
+          }
+        };
+        radio?.addEventListener('change', _update);
+        if (radio?.checked) _update();
+      });
+    }
+
+    /* ── Payment radio: show/hide card form ── */
+    const cashLbl = modal.querySelector('#cprPayLabelCash');
+    const cardLbl = modal.querySelector('#cprPayLabelCard');
+    const cardWrap = modal.querySelector('#cprCardFormWrap');
+    modal.querySelectorAll('input[name="cprPay"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isCard = modal.querySelector('input[name="cprPay"]:checked')?.value === 'credit_card';
+        if (cardWrap)  cardWrap.style.display  = isCard ? 'block' : 'none';
+        if (cashLbl)   cashLbl.style.borderColor  = isCard ? 'var(--clr-border)' : 'var(--clr-primary,#0f766e)';
+        if (cardLbl)   cardLbl.style.borderColor   = isCard ? 'var(--clr-primary,#0f766e)' : 'var(--clr-border)';
+      });
+    });
+
+    /* ── Init CreditCardForm inside modal ── */
+    if (typeof CreditCardForm !== 'undefined' && cardWrap) {
+      const ccForm = cardWrap.querySelector('.cc-form');
+      if (ccForm) CreditCardForm.init(ccForm);
+    }
+
+    /* ── Reverse geocode helper (Nominatim, no key) ── */
+    const _revGeocode = async (lat, lng) => {
+      try {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=${isAr?'ar':'en'}`
+        );
+        if (!r.ok) return;
+        const d = await r.json();
+        const a = d.address || {};
+        const city     = a.city || a.town || a.county || a.state || '';
+        const district = a.suburb || a.neighbourhood || a.quarter || a.district || '';
+        const street   = a.road || a.street || a.pedestrian || '';
+        const streetEl   = modal.querySelector('#cprAddrStreet');
+        const districtEl = modal.querySelector('#cprAddrDistrict');
+        const cityEl     = modal.querySelector('#cprAddrCity');
+        if (streetEl   && street)   streetEl.value   = street;
+        if (districtEl && district) districtEl.value = district;
+        if (cityEl     && city)     cityEl.value     = city;
+      } catch (e) { console.warn('[CPR Map] geocode:', e); }
+    };
+
+    /* ── Init Leaflet map (loaded lazily) ── */
+    this._ensureLeaflet(() => {
+      const mapDiv = modal.querySelector('#cprMapDiv');
+      if (!mapDiv || typeof L === 'undefined') return;
+
+      const _map    = L.map('cprMapDiv').setView([_mapState.lat, _mapState.lng], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap', maxZoom: 19, crossOrigin: true,
+      }).addTo(_map);
+
+      const _pin = L.divIcon({
+        html: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">
+                 <path d="M14 0C6.268 0 0 6.268 0 14c0 9.5 14 26 14 26S28 23.5 28 14C28 6.268 21.732 0 14 0z" fill="#e11d48"/>
+                 <circle cx="14" cy="14" r="6" fill="white" opacity=".9"/>
+                 <circle cx="14" cy="14" r="3" fill="#e11d48"/>
+               </svg>`,
+        className: '', iconSize: [28,40], iconAnchor: [14,40],
+      });
+      const marker = L.marker([_mapState.lat, _mapState.lng], { draggable:true, icon:_pin }).addTo(_map);
+
+      let _geoTimer;
+      const _onMove = (lat, lng) => {
+        _mapState.lat = lat; _mapState.lng = lng; _mapState.moved = true;
+        clearTimeout(_geoTimer);
+        _geoTimer = setTimeout(() => _revGeocode(lat, lng), 600);
+      };
+
+      marker.on('dragend', () => { const p = marker.getLatLng(); _onMove(p.lat, p.lng); });
+      _map.on('click', e => { marker.setLatLng(e.latlng); _onMove(e.latlng.lat, e.latlng.lng); });
+
+      /* Invalidate size after modal animation */
+      setTimeout(() => _map.invalidateSize({ animate:false }), 120);
+      setTimeout(() => _map.invalidateSize({ animate:false }), 400);
+
+      /* "Use My Location" button */
+      modal.querySelector('#cprUseLocBtn')?.addEventListener('click', () => {
+        if (!navigator.geolocation) return;
+        const btn = modal.querySelector('#cprUseLocBtn');
+        if (btn) { btn.disabled = true; btn.textContent = isAr ? '…' : '…'; }
+        navigator.geolocation.getCurrentPosition(
+          async ({ coords: { latitude: lat, longitude: lng } }) => {
+            _mapState.lat = lat; _mapState.lng = lng; _mapState.moved = true;
+            _map.setView([lat, lng], 16);
+            marker.setLatLng([lat, lng]);
+            await _revGeocode(lat, lng);
+            if (btn) { btn.disabled = false; btn.textContent = `📍 ${isAr ? 'موقعي الحالي' : 'My Location'}`; }
+          },
+          () => {
+            if (btn) { btn.disabled = false; btn.textContent = `📍 ${isAr ? 'موقعي الحالي' : 'My Location'}`; }
+          },
+          { timeout: 8000 }
+        );
+      });
+    });
+
+    /* ── Confirm & create order ── */
+    modal.querySelector('#cprConfirmPayBtn').addEventListener('click', () => {
+      /* Collect address */
+      let deliveryAddress = null;
+      const addrSel = modal.querySelector('input[name="cprAddrSel"]:checked');
+      const useNew  = !savedAddresses.length || addrSel?.value === 'new';
+
+      if (!useNew && addrSel) {
+        const idx = parseInt(addrSel.value.replace('saved_', ''), 10);
+        const a   = savedAddresses[idx] || savedAddresses[0];
+        deliveryAddress = {
+          fullName: req.customerName || '',
+          phone:    a.phone || req.customerPhone || '',
+          city: a.city || '', district: a.district || '',
+          street: a.street || a.label || '',
+          coordinates: _mapState.moved ? { latitude: _mapState.lat, longitude: _mapState.lng } : null,
+        };
+      } else {
+        const street = modal.querySelector('#cprAddrStreet')?.value.trim();
+        const city   = modal.querySelector('#cprAddrCity')?.value.trim();
+        if (!street || !city) {
+          const msg = isAr ? 'يرجى إدخال عنوان الشارع والمدينة' : 'Please enter street and city';
+          if (typeof Toast !== 'undefined') Toast.show(msg, 'error'); else alert(msg);
+          return;
+        }
+        deliveryAddress = {
+          fullName: req.customerName || '',
+          phone:    req.customerPhone || '',
+          city, district: modal.querySelector('#cprAddrDistrict')?.value.trim() || '', street,
+          coordinates: _mapState.moved ? { latitude: _mapState.lat, longitude: _mapState.lng } : null,
+        };
+      }
+
+      /* Collect payment method */
+      const payMethod = modal.querySelector('input[name="cprPay"]:checked')?.value || 'cash';
+
+      /* Validate card if credit_card selected */
+      if (payMethod === 'credit_card' && typeof CreditCardForm !== 'undefined') {
+        const ccForm = modal.querySelector('.cc-form');
+        if (ccForm) {
+          const result = CreditCardForm.validate(ccForm, isAr);
+          if (!result.valid) {
+            const msg = isAr ? 'يرجى تصحيح بيانات البطاقة' : 'Please fix card errors';
+            if (typeof Toast !== 'undefined') Toast.show(msg, 'error');
+            return;
+          }
+        }
+      }
+
+      /* Create order */
+      const orderId   = 'ORD-' + Date.now();
+      const orderDate = new Date().toISOString();
+      const newOrder  = {
+        id: orderId, order_type: 'custom_print',
+        custom_print_request_id: requestId,
+        customer_name_en: req.customerName || '',
+        customer_name_ar: req.customerName || '',
+        customer_email:   req.customerEmail || '',
+        customer_phone:   req.customerPhone || '',
+        delivery_address: deliveryAddress,
+        items: [{
+          type: 'custom_print',
+          nameEn: `Custom Print — ${matLabel(req.material)}`,
+          nameAr: `طباعة مخصصة — ${matLabel(req.material)}`,
+          qty: req.quantity || 1,
+          price: req.finalPrice, unitPrice: req.finalPrice,
+        }],
+        product_name:   `طباعة مخصصة — ${matLabel(req.material)}`,
+        amount:         req.finalPrice, subtotal: req.finalPrice, shipping_cost: 0,
+        payment_method: payMethod,
+        payment_status: payMethod === 'cash' ? 'pending' : 'paid',
+        status:         'processing',
+        order_date:     orderDate.split('T')[0],
+        created_at:     orderDate,
+      };
+
+      try {
+        const orders = JSON.parse(localStorage.getItem('b3d_orders') || '[]');
+        orders.unshift(newOrder);
+        localStorage.setItem('b3d_orders', JSON.stringify(orders));
+
+        const adminOrder = {
+          id: orderId, orderType: 'custom_print',
+          customPrintRequestId: requestId,
+          customer: { en: req.customerName||'', ar: req.customerName||'' },
+          email: req.customerEmail||'', phone: req.customerPhone||'',
+          city: { en: deliveryAddress.city, ar: deliveryAddress.city },
+          deliveryAddress,
+          product: `طباعة مخصصة — ${matLabel(req.material)}`,
+          items: newOrder.items,
+          amount: req.finalPrice, subtotal: req.finalPrice, shippingCost: 0,
+          status: 'processing',
+          paymentStatus: newOrder.payment_status,
+          paymentMethod: payMethod,
+          date: orderDate.split('T')[0],
+        };
+        const adminOrders = JSON.parse(localStorage.getItem('b3d_admin_orders') || '[]');
+        adminOrders.unshift(adminOrder);
+        localStorage.setItem('b3d_admin_orders', JSON.stringify(adminOrders));
+
+        const cprs = JSON.parse(localStorage.getItem('b3d_custom_print_requests') || '[]');
+        const cprIdx = cprs.findIndex(r => r.requestId === requestId);
+        if (cprIdx >= 0) {
+          cprs[cprIdx].status    = 'printing';
+          cprs[cprIdx].orderId   = orderId;
+          cprs[cprIdx].updatedAt = orderDate;
+          localStorage.setItem('b3d_custom_print_requests', JSON.stringify(cprs));
+        }
+      } catch (err) {
+        console.error('[CPR Checkout]', err);
+        const msg = isAr ? 'حدث خطأ أثناء إنشاء الطلب' : 'Error creating order';
+        if (typeof Toast !== 'undefined') Toast.show(msg, 'error'); else alert(msg);
+        return;
+      }
+
+      _close();
+      if (typeof Toast !== 'undefined') Toast.show(t('cpOrderCreated'), 'success');
+      this._loadCustomPrints();
+    });
   },
 
   /* ── Addresses ── */

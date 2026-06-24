@@ -162,6 +162,7 @@ const TRANSLATIONS = {
     'custom.form.notes':    'Additional Notes',
     'custom.form.name':     'Name',
     'custom.form.email':    'Email Address',
+    'custom.form.phone':    'Phone Number',
     'custom.form.submit':   'Send Quote Request',
     'custom.price.label':   'Estimated Price',
     'custom.price.note':    '* Changes based on material & quantity',
@@ -398,6 +399,7 @@ const TRANSLATIONS = {
     'custom.form.notes':    'ملاحظات إضافية',
     'custom.form.name':     'الاسم',
     'custom.form.email':    'البريد الإلكتروني',
+    'custom.form.phone':    'رقم الجوال',
     'custom.form.submit':   'إرسال طلب العرض',
     'custom.price.label':   'السعر التقديري',
     'custom.price.note':    '* يتغير حسب المادة والكمية',
@@ -751,8 +753,10 @@ const GuestAuth = {
     return (App._layoutBase === 'pages/') ? 'pages/' : '';
   },
 
-  /* ── Show the polished login-prompt modal ── */
-  showLoginPrompt(product) {
+  /* ── Show the polished login-prompt modal ──
+     @param product  — product object for add-to-cart flows, or null
+     @param opts     — { icon, title, desc } to override default strings       */
+  showLoginPrompt(product, opts = {}) {
     this._injectStyles();
 
     /* Save intent before user navigates away */
@@ -771,6 +775,12 @@ const GuestAuth = {
     const productName = product
       ? (product.title?.[App.lang] || product.title?.en || product.title || '') : '';
 
+    /* Support custom opts for non-product flows (e.g. custom print submission) */
+    const modalIcon  = opts.icon  || '🛒';
+    const modalTitle = opts.title || (isAr ? 'أنت على وشك إضافة منتج للسلة' : 'You\'re About to Add to Cart');
+    const modalDesc  = opts.desc  || null;
+    const dismissLbl = opts.dismiss || (isAr ? '← متابعة التسوق' : 'Continue Shopping →');
+
     /* Remove any stale modal */
     document.getElementById('guestAuthWrap')?.remove();
 
@@ -781,19 +791,18 @@ const GuestAuth = {
       <div class="guest-auth-backdrop" id="guestAuthBackdrop"></div>
       <div class="guest-auth-modal" role="dialog" aria-modal="true"
            aria-label="${isAr ? 'تسجيل الدخول مطلوب' : 'Login required'}">
-        <div class="guest-auth-modal__icon">🛒</div>
-        <h2 class="guest-auth-modal__title">
-          ${isAr ? 'أنت على وشك إضافة منتج للسلة' : 'You\'re About to Add to Cart'}
-        </h2>
+        <div class="guest-auth-modal__icon">${modalIcon}</div>
+        <h2 class="guest-auth-modal__title">${modalTitle}</h2>
         ${productName ? `
         <div class="guest-auth-modal__product">
           ${productImg ? `<img src="${productImg}" alt="" class="guest-auth-modal__product-img" loading="lazy">` : ''}
           <span class="guest-auth-modal__product-name">${productName.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
         </div>` : ''}
         <p class="guest-auth-modal__desc">
-          ${isAr
-            ? 'يرجى تسجيل الدخول أو إنشاء حساب جديد لإتمام عملية الشراء'
-            : 'Please sign in or create an account to complete your purchase'}
+          ${modalDesc
+            || (isAr
+              ? 'يرجى تسجيل الدخول أو إنشاء حساب جديد لإتمام عملية الشراء'
+              : 'Please sign in or create an account to complete your purchase')}
         </p>
         <div class="guest-auth-modal__actions">
           <a href="${loginUrl}" class="guest-auth-modal__btn guest-auth-modal__btn--primary">
@@ -815,7 +824,7 @@ const GuestAuth = {
           </a>
         </div>
         <button type="button" class="guest-auth-modal__dismiss" id="guestAuthDismiss">
-          ${isAr ? '← متابعة التسوق' : 'Continue Shopping →'}
+          ${dismissLbl}
         </button>
       </div>`;
 
@@ -841,6 +850,223 @@ const GuestAuth = {
     }
     document.body.style.overflow = '';
     if (this._escFn) { document.removeEventListener('keydown', this._escFn); this._escFn = null; }
+  },
+};
+
+// ============================================================
+// CREDIT CARD FORM  — shared component (checkout + custom print)
+// ============================================================
+const CreditCardForm = {
+
+  /* ── Card brand detection ── */
+  brand(num) {
+    const n = num.replace(/\D/g, '');
+    if (/^4/.test(n))                           return 'visa';
+    if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return 'mastercard';
+    if (/^9/.test(n))                           return 'mada'; // Saudi mada starts with 9
+    if (/^3[47]/.test(n))                       return 'amex';
+    return null;
+  },
+
+  /* ── Luhn algorithm ── */
+  luhn(num) {
+    const digits = num.replace(/\D/g, '').split('').reverse().map(Number);
+    if (digits.length < 13) return false;
+    const sum = digits.reduce((s, d, i) => {
+      if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9; }
+      return s + d;
+    }, 0);
+    return sum % 10 === 0;
+  },
+
+  /* ── Brand SVG icons ── */
+  brandSvg(brand) {
+    const wrap = (inner, w = 44) =>
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} 28"
+            style="width:${w}px;height:22px;display:block" role="img">${inner}</svg>`;
+    if (brand === 'visa') return wrap(
+      `<rect width="44" height="28" rx="5" fill="#1A1F71"/>
+       <text x="22" y="20" font-family="Arial,Helvetica,sans-serif" font-weight="900"
+             font-style="italic" font-size="17" fill="white" text-anchor="middle">VISA</text>`, 44);
+    if (brand === 'mastercard') return wrap(
+      `<rect width="44" height="28" rx="5" fill="#252525"/>
+       <circle cx="17" cy="14" r="8" fill="#EB001B"/>
+       <circle cx="27" cy="14" r="8" fill="#F79E1B"/>
+       <path d="M22 8a8 8 0 0 1 0 12 8 8 0 0 1 0-12z" fill="#FF5F00"/>`, 44);
+    if (brand === 'mada') return wrap(
+      `<rect width="52" height="28" rx="5" fill="#00847C"/>
+       <text x="26" y="19" text-anchor="middle" font-family="Arial,Helvetica,sans-serif"
+             font-weight="800" font-size="13" fill="white" letter-spacing=".8">mada</text>`, 52);
+    if (brand === 'amex') return wrap(
+      `<rect width="44" height="28" rx="5" fill="#2E77BC"/>
+       <text x="22" y="19" text-anchor="middle" font-family="Arial,Helvetica,sans-serif"
+             font-weight="800" font-size="10" fill="white">AMEX</text>`, 44);
+    return `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" style="opacity:.35">
+              <rect x="1" y="4" width="22" height="16" rx="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>`;
+  },
+
+  /* ── Render the card form HTML (pass a unique idPrefix to avoid collisions) ── */
+  render(idPrefix, isAr) {
+    const p = idPrefix || 'cc';
+    return `
+      <div class="cc-form" data-cc-prefix="${p}">
+        <!-- Card number + brand icon -->
+        <div class="cc-field">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+            <label class="cc-label">${isAr ? 'رقم البطاقة' : 'Card Number'}</label>
+            <span id="${p}BrandIcon" style="min-width:44px;height:22px;display:flex;align-items:center"></span>
+          </div>
+          <input class="cc-input" id="${p}Num" type="tel" maxlength="19"
+                 placeholder="4111 1111 1111 1111" inputmode="numeric" autocomplete="cc-number"
+                 dir="ltr"/>
+          <span class="cc-error" id="${p}NumErr" style="display:none"></span>
+        </div>
+        <!-- Cardholder name -->
+        <div class="cc-field">
+          <label class="cc-label">${isAr ? 'اسم حامل البطاقة' : 'Cardholder Name'}</label>
+          <input class="cc-input" id="${p}Name" type="text" autocomplete="cc-name"
+                 placeholder="${isAr ? 'الاسم كما يظهر على البطاقة' : 'Name as on card'}"/>
+          <span class="cc-error" id="${p}NameErr" style="display:none"></span>
+        </div>
+        <!-- Expiry + CVV row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+          <div class="cc-field">
+            <label class="cc-label">${isAr ? 'تاريخ الانتهاء' : 'Expiry'}</label>
+            <input class="cc-input" id="${p}Expiry" type="text" placeholder="MM / YY"
+                   maxlength="7" autocomplete="cc-exp" inputmode="numeric" dir="ltr"/>
+            <span class="cc-error" id="${p}ExpiryErr" style="display:none"></span>
+          </div>
+          <div class="cc-field">
+            <label class="cc-label" style="display:flex;align-items:center;gap:.3rem">
+              CVV
+              <span style="cursor:help;color:var(--clr-text-muted);font-size:.78rem;font-weight:400"
+                    title="${isAr ? 'الرقم المكون من 3 أرقام على ظهر البطاقة'
+                                  : '3-digit number on the back of your card'}">ⓘ</span>
+            </label>
+            <input class="cc-input" id="${p}Cvv" type="password" maxlength="4"
+                   placeholder="•••" autocomplete="cc-csc" inputmode="numeric"/>
+            <span class="cc-error" id="${p}CvvErr" style="display:none"></span>
+          </div>
+        </div>
+      </div>`;
+  },
+
+  /* ── Inject shared CSS once ── */
+  _injectStyles() {
+    if (document.getElementById('ccFormStyles')) return;
+    const s = document.createElement('style');
+    s.id = 'ccFormStyles';
+    s.textContent = `
+      .cc-form { display:flex; flex-direction:column; gap:.65rem; }
+      .cc-field { display:flex; flex-direction:column; }
+      .cc-label {
+        font-size:.78rem; font-weight:600;
+        color:var(--clr-text-primary,#1a1a2e); margin-bottom:.28rem;
+      }
+      .cc-input {
+        width:100%; padding:.58rem .8rem; border-radius:8px;
+        border:1.5px solid var(--clr-border,#e5e7eb);
+        font-size:.92rem; font-family:inherit; outline:none;
+        background:var(--clr-surface,#fff); color:var(--clr-text-primary,#1a1a2e);
+        transition:border-color .15s;
+      }
+      .cc-input:focus { border-color:var(--clr-primary,#0f766e); }
+      .cc-input.cc-invalid { border-color:var(--clr-error,#ef4444); }
+      .cc-error {
+        font-size:.72rem; color:var(--clr-error,#ef4444);
+        margin-top:.2rem; display:none;
+      }
+    `;
+    document.head.appendChild(s);
+  },
+
+  /* ── Wire up live formatting & brand icon after HTML is in the DOM ── */
+  init(container, onChange) {
+    this._injectStyles();
+    const p     = container.dataset.ccPrefix || 'cc';
+    const numEl = container.querySelector(`#${p}Num`);
+    const expEl = container.querySelector(`#${p}Expiry`);
+    const icon  = container.querySelector(`#${p}BrandIcon`);
+
+    numEl?.addEventListener('input', e => {
+      const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
+      e.target.value = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+      if (icon) icon.innerHTML = this.brandSvg(this.brand(raw));
+      onChange?.();
+    });
+
+    expEl?.addEventListener('input', e => {
+      const isBackspace = e.inputType === 'deleteContentBackward';
+      let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+      if (v.length > 2 && !isBackspace) v = v.slice(0, 2) + ' / ' + v.slice(2);
+      e.target.value = v;
+      onChange?.();
+    });
+
+    container.querySelector(`#${p}Name`)?.addEventListener('input', () => onChange?.());
+    container.querySelector(`#${p}Cvv`)?.addEventListener('input',  () => onChange?.());
+  },
+
+  /* ── Validate all fields; show/hide inline errors; return {valid, data} ── */
+  validate(container, isAr) {
+    const p      = container.dataset?.ccPrefix || container.querySelector('[data-cc-prefix]')?.dataset.ccPrefix || 'cc';
+    const form   = container.dataset?.ccPrefix ? container : container.querySelector('.cc-form');
+    const get    = id => form?.querySelector(`#${p}${id}`)?.value || '';
+    const numRaw = get('Num').replace(/\D/g, '');
+    const name   = get('Name').trim();
+    const exp    = get('Expiry').replace(/\s/g, '');
+    const cvv    = get('Cvv').trim();
+    const errors = {};
+
+    /* Card number */
+    if (numRaw.length < 13 || !this.luhn(numRaw)) {
+      errors.num = isAr ? 'رقم البطاقة غير صالح' : 'Invalid card number';
+    }
+    /* Name */
+    if (!name) {
+      errors.name = isAr ? 'يرجى إدخال اسم حامل البطاقة' : 'Cardholder name required';
+    }
+    /* Expiry */
+    const eParts = exp.replace('/', '').match(/^(\d{2})(\d{2})$/);
+    if (!eParts) {
+      errors.expiry = isAr ? 'صيغة التاريخ: MM/YY' : 'Format: MM/YY';
+    } else {
+      const mm = parseInt(eParts[1], 10);
+      const yy = parseInt(eParts[2], 10) + 2000;
+      const now = new Date();
+      if (mm < 1 || mm > 12 || yy < now.getFullYear() ||
+          (yy === now.getFullYear() && mm < now.getMonth() + 1)) {
+        errors.expiry = isAr ? 'البطاقة منتهية الصلاحية' : 'Card has expired';
+      }
+    }
+    /* CVV */
+    if (!/^\d{3,4}$/.test(cvv)) {
+      errors.cvv = isAr ? 'رمز CVV غير صالح' : 'Invalid CVV';
+    }
+
+    /* Update inline error elements */
+    const showErr = (suffix, msg) => {
+      const el = form?.querySelector(`#${p}${suffix}Err`);
+      if (!el) return;
+      el.textContent    = msg || '';
+      el.style.display  = msg ? 'block' : 'none';
+    };
+    showErr('Num', errors.num); showErr('Name', errors.name);
+    showErr('Expiry', errors.expiry); showErr('Cvv', errors.cvv);
+
+    const valid = !Object.keys(errors).length;
+    return {
+      valid,
+      errors,
+      data: valid ? {
+        number: numRaw, name, expiry: exp, cvv,
+        brand:  this.brand(numRaw),
+        last4:  numRaw.slice(-4),
+      } : null,
+    };
   },
 };
 

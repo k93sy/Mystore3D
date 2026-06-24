@@ -47,6 +47,11 @@
           <span id="navLabelOrders">طلباتي</span>
         </button>
 
+        <button class="account-nav-item" data-section="customprints" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          <span id="navLabelCustomPrints">طلبات الطباعة</span>
+        </button>
+
         <button class="account-nav-item" data-section="addresses" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <span id="navLabelAddresses">عناويني</span>
@@ -255,6 +260,30 @@
               <div class="acc-empty__desc" id="emptyOrdersDesc">طلباتك ستظهر هنا بعد إتمام أول عملية شراء</div>
               <a href="products.html" class="acc-btn acc-btn--primary" id="shopNowBtn">تسوق الآن</a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── CUSTOM PRINT REQUESTS section ── -->
+      <section class="account-section" id="section-customprints">
+        <div class="account-page-header">
+          <div class="account-page-header__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          </div>
+          <div>
+            <h1 class="account-page-header__title" id="customPrintsHeading">طلبات الطباعة المخصصة</h1>
+            <p  class="account-page-header__sub"   id="customPrintsSub">تتبع طلبات الطباعة ثلاثية الأبعاد المخصصة</p>
+          </div>
+        </div>
+        <div class="account-card">
+          <div class="account-card__header">
+            <div class="account-card__title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span id="cardTitleCustomPrints">سجل طلبات الطباعة</span>
+            </div>
+          </div>
+          <div class="account-card__body" id="customPrintsBody">
+            <!-- Filled by account.js -->
           </div>
         </div>
       </section>

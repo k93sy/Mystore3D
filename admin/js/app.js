@@ -13,9 +13,29 @@ const T = {
     'nav.dashboard':'لوحة التحكم','nav.analytics':'الإحصائيات',
     'nav.products':'المنتجات','nav.categories':'التصنيفات',
     'nav.orders':'الطلبات','nav.customers':'العملاء',
+    'nav.customprints':'طلبات الطباعة',
     'nav.shipping':'الشحن والتتبع','nav.payments':'المدفوعات',
     'nav.reviews':'التقييمات','nav.discounts':'الخصومات',
     'nav.settings':'الإعدادات',
+    /* custom print requests */
+    'cpr.title':'طلبات الطباعة المخصصة',
+    'cpr.requestId':'رقم الطلب','cpr.customer':'العميل','cpr.material':'المادة',
+    'cpr.color':'اللون','cpr.quality':'الجودة','cpr.qty':'الكمية',
+    'cpr.file':'الملف','cpr.status':'الحالة','cpr.date':'التاريخ',
+    'cpr.status.pending_review':'بانتظار المراجعة',
+    'cpr.status.awaiting_customer':'بانتظار موافقة العميل',
+    'cpr.status.printing':'قيد الطباعة',
+    'cpr.status.ready_to_ship':'جاهز للشحن',
+    'cpr.status.delivered':'تم التوصيل','cpr.status.cancelled':'ملغي',
+    'cpr.detail':'تفاصيل الطلب','cpr.customerInfo':'معلومات العميل',
+    'cpr.printSpecs':'مواصفات الطباعة','cpr.attachedFile':'الملف المرفق',
+    'cpr.pricing':'تحديد السعر النهائي',
+    'cpr.finalPrice':'السعر النهائي *','cpr.sendQuote':'إرسال السعر للعميل ←',
+    'cpr.updateStatus':'تحديث الحالة','cpr.adminNotes':'ملاحظات داخلية',
+    'cpr.saveChanges':'حفظ التغييرات','cpr.download':'تحميل الملف',
+    'cpr.noFile':'لم يُرفق ملف','cpr.notes':'ملاحظات العميل',
+    'cpr.whatsapp':'واتساب','cpr.call':'اتصال',
+    'cpr.errNoPrice':'يرجى إدخال السعر النهائي أولاً',
     /* common */
     'common.loading':'جاري التحميل…','common.save':'حفظ',
     'common.cancel':'إلغاء','common.delete':'حذف','common.edit':'تعديل',
@@ -123,9 +143,28 @@ const T = {
     'nav.dashboard':'Dashboard','nav.analytics':'Analytics',
     'nav.products':'Products','nav.categories':'Categories',
     'nav.orders':'Orders','nav.customers':'Customers',
+    'nav.customprints':'Print Requests',
     'nav.shipping':'Shipping','nav.payments':'Payments',
     'nav.reviews':'Reviews','nav.discounts':'Discounts',
     'nav.settings':'Settings',
+    'cpr.title':'Custom Print Requests',
+    'cpr.requestId':'Request ID','cpr.customer':'Customer','cpr.material':'Material',
+    'cpr.color':'Color','cpr.quality':'Quality','cpr.qty':'Qty',
+    'cpr.file':'File','cpr.status':'Status','cpr.date':'Date',
+    'cpr.status.pending_review':'Pending Review',
+    'cpr.status.awaiting_customer':'Awaiting Customer',
+    'cpr.status.printing':'Printing',
+    'cpr.status.ready_to_ship':'Ready to Ship',
+    'cpr.status.delivered':'Delivered','cpr.status.cancelled':'Cancelled',
+    'cpr.detail':'Request Detail','cpr.customerInfo':'Customer Info',
+    'cpr.printSpecs':'Print Specs','cpr.attachedFile':'Attached File',
+    'cpr.pricing':'Set Final Price',
+    'cpr.finalPrice':'Final Price *','cpr.sendQuote':'Send Price to Customer →',
+    'cpr.updateStatus':'Update Status','cpr.adminNotes':'Internal Notes',
+    'cpr.saveChanges':'Save Changes','cpr.download':'Download File',
+    'cpr.noFile':'No file attached','cpr.notes':'Customer Notes',
+    'cpr.whatsapp':'WhatsApp','cpr.call':'Call',
+    'cpr.errNoPrice':'Please enter the final price first',
     'common.loading':'Loading…','common.save':'Save',
     'common.cancel':'Cancel','common.delete':'Delete','common.edit':'Edit',
     'common.add':'Add','common.search':'Search…','common.actions':'Actions',
@@ -341,6 +380,7 @@ const ICO = {
   x:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
   ban:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
   unlock:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`,
+  print:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>`,
 };
 
 /* ════════════════════════════════════════════════════════════════
@@ -357,7 +397,7 @@ const Admin = {
     this._renderShell();
     const hash = (location.hash || '').replace('#', '');
     const VALID = ['dashboard','analytics','products','categories','orders',
-                   'customers','shipping','payments','reviews','discounts','settings'];
+                   'customers','customprints','shipping','payments','reviews','discounts','settings'];
     this.navigate(VALID.includes(hash) ? hash : 'dashboard');
   },
 
@@ -371,8 +411,17 @@ const Admin = {
       { id:'products',   icon:ICO.box    },
       { id:'categories', icon:ICO.box    },
       { group: l==='ar'?'التجارة':'Commerce' },
-      { id:'orders',     icon:ICO.orders  },
-      { id:'customers',  icon:ICO.users   },
+      { id:'orders',       icon:ICO.orders  },
+      { id:'customers',    icon:ICO.users   },
+      { id:'customprints', icon:ICO.print,
+        badge: (() => {
+          try {
+            const n = JSON.parse(localStorage.getItem('b3d_custom_print_requests')||'[]')
+              .filter(r => !r.isRead).length;
+            return n > 0 ? n : 0;
+          } catch { return 0; }
+        })()
+      },
       { group: l==='ar'?'اللوجستيات':'Logistics' },
       { id:'shipping',   icon:ICO.box    },
       { id:'payments',   icon:ICO.revenue },
@@ -384,9 +433,14 @@ const Admin = {
 
     const navHTML = nav.map(n => {
       if (n.group) return `<div class="adm-nav__section-lbl">${esc(n.group)}</div>`;
+      const badgeHtml = n.badge
+        ? `<span style="margin-inline-start:auto;background:#ef4444;color:#fff;border-radius:100px;
+                        font-size:.65rem;font-weight:700;padding:1px 6px;min-width:18px;text-align:center;
+                        line-height:1.4">${n.badge}</span>`
+        : '';
       return `<div class="adm-nav__item">
         <div class="adm-nav__link" data-section="${n.id}">
-          ${n.icon}<span>${t('nav.' + n.id)}</span>
+          ${n.icon}<span>${t('nav.' + n.id)}</span>${badgeHtml}
         </div>
       </div>`;
     }).join('');
@@ -1609,8 +1663,13 @@ Sections.orders = {
       <tbody>${filtered.map(o => {
         const name = ar ? (o.customer?.ar||o.customer?.en) : (o.customer?.en||o.customer?.ar);
         const city = ar ? (o.city?.ar||o.city?.en) : (o.city?.en||o.city?.ar);
-        return `<tr>
-          <td><span class="adm-code">${esc(o.id)}</span></td>
+        const isCustomPrint = o.orderType === 'custom_print';
+        return `<tr${isCustomPrint?' style="background:rgba(139,92,246,.04)"':''}>
+          <td>
+            <span class="adm-code">${esc(o.id)}</span>
+            ${isCustomPrint?`<span title="${ar?'طباعة مخصصة':'Custom Print'}"
+                                   style="margin-inline-start:.3rem;font-size:.85rem">🖨️</span>`:''}
+          </td>
           <td>
             <div style="display:flex;align-items:center;gap:.5rem">
               <div class="adm-avatar">${(name||'?').charAt(0).toUpperCase()}</div>
@@ -2083,6 +2142,335 @@ Sections.customers = {
       toast(t('common.deleted'));
       this.render(document.getElementById('admContent'));
     }, { icon: '🗑️' });
+  },
+};
+
+/* ─────────────────────────────────────────────────────────────
+   CUSTOM PRINT REQUESTS
+───────────────────────────────────────────────────────────── */
+Sections.customprints = {
+  _filter: 'all',
+
+  /* ── Human-readable labels ── */
+  _matLabel(m) {
+    const map = { pla:'PLA', abs:'ABS', petg:'PETG', resin:'Resin', nylon:'Nylon', tpu:'TPU' };
+    return map[m] || m || '—';
+  },
+  _colorLabel(c, ar) {
+    const map = {
+      white:  ar?'أبيض':'White',  black: ar?'أسود':'Black',
+      gray:   ar?'رمادي':'Gray',   red:   ar?'أحمر':'Red',
+      blue:   ar?'أزرق':'Blue',   green: ar?'أخضر':'Green',
+      yellow: ar?'أصفر':'Yellow', orange:ar?'برتقالي':'Orange',
+      custom: ar?'لون مخصص':'Custom',
+    };
+    return map[c] || c || '—';
+  },
+  _qualityLabel(q, ar) {
+    const map = {
+      draft:    ar?'مسودة — 0.3mm':'Draft — 0.3mm',
+      standard: ar?'قياسي — 0.2mm':'Standard — 0.2mm',
+      fine:     ar?'دقيق — 0.1mm':'Fine — 0.1mm',
+      ultra:    ar?'فائق الدقة — 0.05mm':'Ultra — 0.05mm',
+    };
+    return map[q] || q || '—';
+  },
+  _statusCfg(s, ar) {
+    const map = {
+      pending_review:    { label: ar?'بانتظار المراجعة':'Pending Review',
+                           style:'background:rgba(59,130,246,.12);color:#2563EB' },
+      awaiting_customer: { label: ar?'بانتظار موافقة العميل':'Awaiting Customer',
+                           style:'background:rgba(249,115,22,.12);color:#EA580C' },
+      printing:          { label: ar?'قيد الطباعة':'Printing',    cls:'adm-badge--accent' },
+      ready_to_ship:     { label: ar?'جاهز للشحن':'Ready to Ship',
+                           style:'background:rgba(139,92,246,.12);color:#7C3AED' },
+      delivered:         { label: ar?'تم التوصيل':'Delivered',    cls:'adm-badge--success' },
+      cancelled:         { label: ar?'ملغي':'Cancelled',           cls:'adm-badge--error' },
+    };
+    return map[s] || { cls:'adm-badge--neutral', label: s };
+  },
+
+  async render(el) {
+    el.innerHTML = skeletonTable();
+    const ar = Admin.lang === 'ar';
+
+    /* Mark all requests as read when admin opens this section */
+    try {
+      const list = DB.getCustomPrintRequests();
+      let changed = false;
+      list.forEach(r => { if (!r.isRead) { r.isRead = true; changed = true; } });
+      if (changed) {
+        localStorage.setItem('b3d_custom_print_requests', JSON.stringify(list));
+        /* Refresh nav badge */
+        Admin._renderShell();
+      }
+    } catch (_) {}
+
+    const all = DB.getCustomPrintRequests();
+
+    const STATUSES = ['all','pending_review','awaiting_customer','printing','ready_to_ship','delivered','cancelled'];
+    const statusLabels = {
+      all:               ar?'الكل':'All',
+      pending_review:    ar?'بانتظار المراجعة':'Pending Review',
+      awaiting_customer: ar?'بانتظار الموافقة':'Awaiting Approval',
+      printing:          ar?'قيد الطباعة':'Printing',
+      ready_to_ship:     ar?'جاهز للشحن':'Ready to Ship',
+      delivered:         ar?'تم التوصيل':'Delivered',
+      cancelled:         ar?'ملغي':'Cancelled',
+    };
+
+    el.innerHTML = `<div class="adm-page">
+      <div class="adm-page-hdr">
+        <div>
+          <div class="adm-page-title">${t('cpr.title')}</div>
+          <div class="adm-page-sub" id="cprCount">${fmt(all.length)} ${ar?'طلب':'requests'}</div>
+        </div>
+      </div>
+      <div class="adm-table-wrap">
+        <div class="adm-toolbar" style="flex-wrap:wrap;gap:.4rem">
+          ${STATUSES.map(s => `
+            <button class="adm-btn adm-btn--sm ${this._filter===s?'adm-btn--accent':'adm-btn--ghost'}"
+                    data-cpr-filter="${s}" style="font-size:.74rem">${statusLabels[s]}</button>
+          `).join('')}
+          <div class="adm-spacer"></div>
+          <span class="adm-badge adm-badge--neutral" id="cprVisibleCount">${fmt(all.length)}</span>
+        </div>
+        <div id="cprTableWrap"></div>
+      </div>
+    </div>`;
+
+    el.querySelectorAll('[data-cpr-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._filter = btn.dataset.cprFilter;
+        el.querySelectorAll('[data-cpr-filter]').forEach(b =>
+          b.classList.toggle('adm-btn--accent', b.dataset.cprFilter === this._filter));
+        el.querySelectorAll('[data-cpr-filter]').forEach(b =>
+          b.classList.toggle('adm-btn--ghost', b.dataset.cprFilter !== this._filter));
+        this._renderTable(el, all);
+      });
+    });
+
+    this._renderTable(el, all);
+  },
+
+  _renderTable(el, all) {
+    const ar = Admin.lang === 'ar';
+    const filtered = this._filter === 'all'
+      ? all
+      : all.filter(r => r.status === this._filter);
+
+    const countEl = el.querySelector('#cprVisibleCount');
+    if (countEl) countEl.textContent = fmt(filtered.length);
+
+    const wrap = el.querySelector('#cprTableWrap');
+    if (!wrap) return;
+
+    if (!filtered.length) {
+      wrap.innerHTML = `<div class="adm-empty"><div class="adm-empty__ico">🖨️</div>
+        <div class="adm-empty__txt">${t('common.noData')}</div></div>`;
+      return;
+    }
+
+    wrap.innerHTML = `<div class="adm-table-scroll"><table>
+      <thead><tr>
+        <th>${t('cpr.requestId')}</th>
+        <th>${t('cpr.customer')}</th>
+        <th>${t('cpr.material')}</th>
+        <th>${t('cpr.color')}</th>
+        <th>${t('cpr.quality')}</th>
+        <th>${t('cpr.qty')}</th>
+        <th>${t('cpr.file')}</th>
+        <th>${t('cpr.status')}</th>
+        <th>${t('cpr.date')}</th>
+        <th>${t('common.actions')}</th>
+      </tr></thead>
+      <tbody>${filtered.map(r => {
+        const sc   = this._statusCfg(r.status, ar);
+        const date = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString(ar?'ar-SA':'en-GB') : '—';
+        const badgeEl = sc.style
+          ? `<span class="adm-badge" style="${sc.style}">${esc(sc.label)}</span>`
+          : `<span class="adm-badge ${sc.cls}">${esc(sc.label)}</span>`;
+        return `<tr>
+          <td><span class="adm-code" style="font-size:.75rem">${esc(r.requestId)}</span></td>
+          <td>
+            <div style="font-weight:600;font-size:.82rem">${esc(r.customerName||'—')}</div>
+            <div style="font-size:.74rem;color:var(--txt-m);direction:ltr;text-align:start">${esc(r.customerPhone||'')}</div>
+          </td>
+          <td style="font-weight:600">${esc(this._matLabel(r.material))}</td>
+          <td style="font-size:.8rem">${esc(this._colorLabel(r.color, ar))}</td>
+          <td style="font-size:.78rem">${esc(r.quality||'—')}</td>
+          <td style="text-align:center;font-weight:700">${r.quantity||1}</td>
+          <td style="font-size:.76rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            ${r.fileName ? esc(r.fileName) : `<span style="color:var(--txt-m)">${t('cpr.noFile')}</span>`}
+          </td>
+          <td>${badgeEl}</td>
+          <td style="font-size:.78rem;color:var(--txt-m)">${date}</td>
+          <td>
+            <button class="adm-btn adm-btn--ghost adm-btn--sm" data-cpr-detail="${esc(r.requestId)}"
+                    style="font-size:.74rem">${t('cpr.detail')}</button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+
+    wrap.querySelectorAll('[data-cpr-detail]').forEach(btn => {
+      btn.addEventListener('click', () => this._detail(btn.dataset.cprDetail));
+    });
+  },
+
+  _detail(requestId) {
+    const ar = Admin.lang === 'ar';
+    const r  = DB.getCustomPrintRequests().find(x => x.requestId === requestId);
+    if (!r) return;
+
+    const sc   = this._statusCfg(r.status, ar);
+    const date = r.submittedAt ? new Date(r.submittedAt).toLocaleString(ar?'ar-SA':'en-GB') : '—';
+    const waPhone = (r.customerPhone||'').replace(/[^0-9+]/g,'');
+    const waLink  = waPhone ? `https://wa.me/${waPhone.replace(/^0/,'966')}` : null;
+
+    /* File section */
+    const fileSizeKb  = r.fileSize ? (r.fileSize / 1024).toFixed(0) + ' KB' : '';
+    const fileSection = r.fileName
+      ? `<div style="display:flex;align-items:center;gap:.75rem;padding:.6rem .8rem;
+                     background:var(--s2);border-radius:var(--r-sm);border:1px solid var(--border-s)">
+           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+             <polyline points="14 2 14 8 20 8"/>
+           </svg>
+           <div style="flex:1;min-width:0">
+             <div style="font-weight:700;font-size:.85rem">${esc(r.fileName)}</div>
+             <div style="font-size:.74rem;color:var(--txt-m)">${r.fileType||''} ${fileSizeKb}</div>
+             ${r.fileType==='STL'?`<div style="font-size:.72rem;color:var(--acc)">ملف STL ثلاثي الأبعاد</div>`:''}
+           </div>
+           ${r.fileData
+             ? `<a href="${r.fileData}" download="${esc(r.fileName)}" class="adm-btn adm-btn--ghost adm-btn--sm">
+                  ${t('cpr.download')}
+                </a>`
+             : `<span style="font-size:.74rem;color:var(--txt-m)">${ar?'يحتاج رفع سحابي':'Cloud upload needed'}</span>`}
+         </div>`
+      : `<div style="color:var(--txt-m);font-size:.83rem">${t('cpr.noFile')}</div>`;
+
+    const STATUSES = ['pending_review','awaiting_customer','printing','ready_to_ship','delivered','cancelled'];
+
+    openModal(`
+      <div class="adm-detail-grid">
+        <!-- ── Customer info ── -->
+        <div class="adm-detail-item" style="grid-column:1/-1">
+          <div style="padding:.75rem;background:var(--s2);border:1px solid var(--border-s);border-radius:var(--r-md)">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-m);margin-bottom:.6rem">${t('cpr.customerInfo')}</div>
+            <div class="adm-detail-grid" style="gap:.5rem .75rem">
+              <div class="adm-detail-item"><label>${t('common.name')}</label><span>${esc(r.customerName||'—')}</span></div>
+              <div class="adm-detail-item"><label>${t('common.email')}</label><span>${esc(r.customerEmail||'—')}</span></div>
+              <div class="adm-detail-item"><label>${t('common.phone')}</label>
+                <span style="display:flex;align-items:center;gap:.5rem">
+                  <span dir="ltr">${esc(r.customerPhone||'—')}</span>
+                  ${r.customerPhone ? `
+                    <a href="tel:${esc(r.customerPhone)}" class="adm-btn adm-btn--ghost adm-btn--sm" style="font-size:.72rem">${t('cpr.call')}</a>
+                    ${waLink ? `<a href="${waLink}" target="_blank" rel="noopener" class="adm-btn adm-btn--ghost adm-btn--sm" style="font-size:.72rem;color:#25D366">${t('cpr.whatsapp')}</a>` : ''}
+                  ` : ''}
+                </span>
+              </div>
+              <div class="adm-detail-item"><label>${t('cpr.date')}</label><span>${date}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Print specs ── -->
+        <div class="adm-detail-item" style="grid-column:1/-1">
+          <div style="padding:.75rem;background:var(--s2);border:1px solid var(--border-s);border-radius:var(--r-md)">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-m);margin-bottom:.6rem">${t('cpr.printSpecs')}</div>
+            <div class="adm-detail-grid" style="gap:.5rem .75rem">
+              <div class="adm-detail-item"><label>${t('cpr.material')}</label><span style="font-weight:700">${esc(this._matLabel(r.material))}</span></div>
+              <div class="adm-detail-item"><label>${t('cpr.color')}</label><span>${esc(this._colorLabel(r.color, ar))}</span></div>
+              <div class="adm-detail-item"><label>${t('cpr.quality')}</label><span>${esc(this._qualityLabel(r.quality, ar))}</span></div>
+              <div class="adm-detail-item"><label>${t('cpr.qty')}</label><span style="font-weight:700">${r.quantity||1}</span></div>
+              ${r.notes ? `<div class="adm-detail-item" style="grid-column:1/-1"><label>${t('cpr.notes')}</label><span>${esc(r.notes)}</span></div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Attached file ── -->
+        <div class="adm-detail-item" style="grid-column:1/-1">
+          <div style="padding:.75rem;background:var(--s2);border:1px solid var(--border-s);border-radius:var(--r-md)">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-m);margin-bottom:.6rem">${t('cpr.attachedFile')}</div>
+            ${fileSection}
+          </div>
+        </div>
+
+        <!-- ── Final Price (single field — no estimated price) ── -->
+        <div class="adm-detail-item" style="grid-column:1/-1">
+          <div style="padding:.75rem;background:var(--s2);border:1px solid var(--border-s);border-radius:var(--r-md)">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-m);margin-bottom:.6rem">${t('cpr.pricing')}</div>
+            ${r.status === 'printing' || r.status === 'ready_to_ship' || r.status === 'delivered'
+              ? `<div style="font-size:.88rem;font-weight:700;color:var(--acc)">${ar?'السعر النهائي المعتمد:':'Approved Final Price:'} ${fmtSar(r.finalPrice||0)}</div>`
+              : `<div style="display:flex;align-items:flex-end;gap:.65rem;flex-wrap:wrap">
+                   <div style="flex:1;min-width:140px">
+                     <label class="adm-label" style="font-size:.74rem">${t('cpr.finalPrice')} (${ar?'ر.س':'SAR'})</label>
+                     <input class="adm-input" id="cprFinalPrice" type="number" min="0.01" step="0.01"
+                            placeholder="0.00" value="${r.finalPrice||''}" style="font-size:.88rem;font-weight:700">
+                   </div>
+                   <button class="adm-btn adm-btn--primary" id="cprSendQuoteBtn" style="font-size:.8rem;white-space:nowrap">
+                     ${t('cpr.sendQuote')}
+                   </button>
+                 </div>`}
+          </div>
+        </div>
+
+        <!-- ── Status + admin notes ── -->
+        <div class="adm-detail-item" style="grid-column:1/-1">
+          <div style="padding:.75rem;background:var(--s2);border:1px solid var(--border-s);border-radius:var(--r-md)">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-m);margin-bottom:.6rem">${t('cpr.updateStatus')}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem .9rem;margin-bottom:.6rem">
+              <div>
+                <label class="adm-label" style="font-size:.74rem">${t('cpr.status')}</label>
+                <select class="adm-select" id="cprStatusSel" style="font-size:.85rem">
+                  ${STATUSES.map(s => {
+                    const sc2 = this._statusCfg(s, ar);
+                    return `<option value="${s}" ${r.status===s?'selected':''}>${esc(sc2.label)}</option>`;
+                  }).join('')}
+                </select>
+              </div>
+            </div>
+            <label class="adm-label" style="font-size:.74rem;display:block;margin-bottom:.3rem">${t('cpr.adminNotes')}</label>
+            <textarea class="adm-input" id="cprAdminNotes" rows="3" style="font-size:.82rem">${esc(r.adminNotes||'')}</textarea>
+          </div>
+        </div>
+      </div>`, { lg: true });
+
+    document.getElementById('admModal').querySelector('.adm-modal__hdr .adm-modal__title').textContent =
+      t('cpr.detail') + ' — ' + r.requestId;
+
+    document.getElementById('admModal').querySelector('.adm-modal__foot').innerHTML = `
+      <button class="adm-btn adm-btn--ghost" onclick="closeModal()">${t('common.cancel')}</button>
+      <button class="adm-btn adm-btn--primary" id="cprSaveBtn">${t('cpr.saveChanges')}</button>`;
+
+    /* ── Send final price to customer ── */
+    document.getElementById('cprSendQuoteBtn')?.addEventListener('click', () => {
+      const fp = parseFloat(document.getElementById('cprFinalPrice')?.value);
+      if (!fp || fp <= 0) {
+        toast(t('cpr.errNoPrice'), 'error');
+        document.getElementById('cprFinalPrice')?.focus();
+        return;
+      }
+      DB.updateCustomPrintRequest(requestId, {
+        finalPrice: fp,
+        status:     'awaiting_customer',
+      });
+      const sel = document.getElementById('cprStatusSel');
+      if (sel) sel.value = 'awaiting_customer';
+      toast(ar?'تم إرسال السعر للعميل ✓':'Price sent to customer ✓','success');
+    });
+
+    /* ── Save status + admin notes ── */
+    document.getElementById('cprSaveBtn')?.addEventListener('click', () => {
+      const fp     = parseFloat(document.getElementById('cprFinalPrice')?.value) || r.finalPrice || null;
+      const status = document.getElementById('cprStatusSel')?.value || r.status;
+      const notes  = document.getElementById('cprAdminNotes')?.value || '';
+      DB.updateCustomPrintRequest(requestId, { finalPrice: fp, status, adminNotes: notes });
+      closeModal();
+      toast(ar?'تم الحفظ بنجاح ✓':'Saved ✓','success');
+      this.render(document.getElementById('admContent'));
+    });
   },
 };
 

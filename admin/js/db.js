@@ -76,6 +76,8 @@ const DB = (() => {
     if (raw.customer && typeof raw.customer === 'object') {
       return {
         id:              raw.id,
+        orderType:       raw.orderType || 'regular',
+        customPrintRequestId: raw.customPrintRequestId || null,
         customer:        { en: raw.customer.en || '', ar: raw.customer.ar || '' },
         email:           raw.email || '',
         phone:           raw.phone || '',
@@ -104,6 +106,8 @@ const DB = (() => {
     const items = Array.isArray(raw.items) ? raw.items : [];
     return {
       id:              raw.id,
+      orderType:       raw.order_type || raw.orderType || 'regular',
+      customPrintRequestId: raw.custom_print_request_id || raw.customPrintRequestId || null,
       customer:        {
         en: raw.customer_name_en || '',
         ar: raw.customer_name_ar || raw.customer_name_en || '',
@@ -273,6 +277,29 @@ const DB = (() => {
     getStockLog(productId = null) {
       const log = _arr(_get('b3d_stock_log'));
       return productId ? log.filter(e => e.productId === productId) : log;
+    },
+
+    /* ══════════════════════════════════════
+       CUSTOM PRINT REQUESTS
+    ══════════════════════════════════════ */
+    getCustomPrintRequests() {
+      return _arr(_get('b3d_custom_print_requests'));
+    },
+    saveCustomPrintRequest(req) {
+      const list = this.getCustomPrintRequests();
+      const idx  = list.findIndex(r => r.requestId === req.requestId);
+      if (idx >= 0) list[idx] = { ...list[idx], ...req };
+      else list.unshift(req);
+      _set('b3d_custom_print_requests', list);
+      return req.requestId;
+    },
+    updateCustomPrintRequest(requestId, patch) {
+      const list = this.getCustomPrintRequests();
+      const idx  = list.findIndex(r => r.requestId === requestId);
+      if (idx < 0) return false;
+      list[idx] = { ...list[idx], ...patch, updatedAt: new Date().toISOString() };
+      _set('b3d_custom_print_requests', list);
+      return true;
     },
 
     getImage(id) {

@@ -18,10 +18,16 @@
 'use strict';
 
 /* ----------------------------------------------------------------
-   CONFIGURATION — fill in your Supabase credentials
+   CONFIGURATION — credentials loaded from js/core/config.js
+   (gitignored). Fallback strings keep offline/demo mode working
+   when config.js is absent.
    ---------------------------------------------------------------- */
-const SUPABASE_URL  = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON = 'YOUR_ANON_PUBLIC_KEY';
+const SUPABASE_URL  = (typeof window !== 'undefined' && window.SUPABASE_URL)
+  ? window.SUPABASE_URL
+  : 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_ANON = (typeof window !== 'undefined' && window.SUPABASE_ANON_KEY)
+  ? window.SUPABASE_ANON_KEY
+  : 'YOUR_ANON_PUBLIC_KEY';
 const STORAGE_BUCKET = 'product-images';
 
 /* ----------------------------------------------------------------

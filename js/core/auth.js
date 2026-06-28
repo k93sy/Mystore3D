@@ -415,10 +415,10 @@ const AuthService = {
         .eq('id', user.id);
       if (error) return { ok: false, error: this._mapError(error) };
     } else {
-      // Update the live users record so getUser() doesn't overwrite the changes on next load
+      // Update the live local-users store so getUser() picks up changes on reload
       const users = this._localUsers();
       const idx = users.findIndex(u => u.id === user.id);
-      if (idx >= 0) {
+      if (idx !== -1) {
         users[idx] = { ...users[idx], ...data };
         this._saveLocalUsers(users);
       }

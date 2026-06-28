@@ -101,33 +101,34 @@ const PaymentService = {
       created_at:        new Date().toISOString(),
     };
 
-    if (typeof AdminDB !== 'undefined' && typeof AdminDB.getOrders === 'function') {
-      // Persist to the shared orders store (shows in admin dashboard)
+    // Primary write: Supabase (cross-device persistent)
+    if (typeof _sb !== 'undefined' && _sb) {
       try {
-        const orders = await AdminDB.getOrders();
-        orders.unshift(order);
-        // If online, push to Supabase
-        if (typeof _sb !== 'undefined' && _sb) {
-          await _sb.from('orders').insert({
-            id:               order.id,
-            customer_name_en: order.customer_name_en,
-            customer_name_ar: order.customer_name_ar,
-            customer_email:   order.customer_email,
-            city_en:          order.city_en,
-            city_ar:          order.city_ar,
-            product_name:     order.product_name,
-            amount:           order.amount,
-            payment_status:   'pending',
-            status:           'pending',
-            items:            orderData.items.length,
-            order_date:       order.order_date,
-          }).then(({ error }) => { if (error) console.warn('[Payment] Supabase order insert:', error.message); });
-        }
-        localStorage.setItem('b3d_pending_order', JSON.stringify(order));
-      } catch(e) { console.warn('[Payment] createOrder store error:', e); }
+        const { error: sbErr } = await _sb.from('orders').insert({
+          id:               order.id,
+          customer_name_en: order.customer_name_en,
+          customer_name_ar: order.customer_name_ar,
+          customer_email:   order.customer_email,
+          customer_phone:   order.customer_phone,
+          city_en:          order.city_en,
+          city_ar:          order.city_ar,
+          address:          order.address,
+          product_name:     order.product_name,
+          amount:           order.amount,
+          subtotal:         order.subtotal,
+          shipping_cost:    order.shipping_cost,
+          discount_code:    order.discount_code,
+          discount_amount:  order.discount_amount,
+          payment_status:   'pending',
+          status:           'pending',
+          items:            orderData.items.length,
+          order_date:       order.order_date,
+        });
+        if (sbErr) console.warn('[Payment] Supabase order insert:', sbErr.message);
+      } catch (e) { console.warn('[Payment] Supabase order insert exception:', e.message); }
     }
 
-    // Always save to localStorage (b3d_orders — storefront store)
+    // Always cache to localStorage (used by account page and checkout flow)
     const orders = this._lsOrders();
     orders.unshift(order);
     this._saveOrders(orders);
@@ -222,6 +223,36 @@ const PaymentService = {
         localStorage.setItem('b3d_products', JSON.stringify(products));
         localStorage.setItem('b3d_stock_log', JSON.stringify(log.slice(0, 1000)));
         console.info('[PaymentService] Stock deducted for order', orderId);
+
+        // Sync stock changes to Supabase (fire-and-forget)
+        if (typeof _sb !== 'undefined' && _sb) {
+          for (const item of (items || [])) {
+            const pid = item.id || item.productId;
+            if (!pid) continue;
+            const updated = products.find(p => p.id === pid);
+            if (!updated) continue;
+            _sb.from('products')
+              .update({ stock: updated.stock, status: updated.status, updated_at: new Date().toISOString() })
+              .eq('id', pid)
+              .then(({ error }) => { if (error) console.warn('[Payment] stock sync error for', pid, error.message); });
+          }
+          // Sync log entries to Supabase
+          const newEntries = log.filter(e => e.orderId === orderId).map(e => ({
+            id:           e.id,
+            product_id:   e.productId,
+            product_name: e.productNameEn || '',
+            change_type:  e.changeType,
+            delta:        e.delta,
+            stock_before: e.stockBefore,
+            stock_after:  e.stockAfter,
+            order_id:     e.orderId,
+            reason:       e.reason || '',
+          }));
+          if (newEntries.length) {
+            _sb.from('stock_log').insert(newEntries)
+              .then(({ error }) => { if (error) console.warn('[Payment] stock_log sync error:', error.message); });
+          }
+        }
       }
     } catch (e) {
       console.warn('[PaymentService] Stock deduction error:', e);

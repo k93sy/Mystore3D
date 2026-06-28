@@ -26,19 +26,64 @@
 
 const DB = (() => {
 
+  /* ── Supabase client (set by js/core/db.js before this file loads) ── */
+  const _client     = () => (typeof window !== 'undefined' ? window._sbClient : null);
+  const _configured = () => !!_client();
+
+  /* ── Schema mappers: localStorage ↔ Supabase row format ─────────── */
+  const _catToRow  = c => ({ id: c.id, name_en: c.nameEn || '', name_ar: c.nameAr || '', icon: c.icon || '📦', sort_order: 0 });
+  const _rowToCat  = r => ({ id: r.id, nameEn: r.name_en, nameAr: r.name_ar, icon: r.icon });
+  const _discToRow = d => ({ id: d.id, code: d.code || '', type: d.type || 'percentage', value: Number(d.value) || 0, min_order: Number(d.minOrder) || 0, max_uses: d.maxUses ?? null, uses: d.uses || 0, active: d.active !== false, expires_at: d.expiresAt || null });
+  const _rowToDisc = r => ({ id: r.id, code: r.code, type: r.type, value: r.value, minOrder: r.min_order, maxUses: r.max_uses, uses: r.uses, active: r.active, expiresAt: r.expires_at });
+  const _revToRow  = r => ({ id: r.id, product_id: r.productId || null, customer_name: r.customerName || '', rating: r.rating || 5, comment: r.comment || '', status: r.status || 'pending' });
+  const _rowToRev  = r => ({ id: r.id, productId: r.product_id, customerName: r.customer_name, rating: r.rating, comment: r.comment, status: r.status });
+  const _cprToRow  = r => ({ id: r.requestId || r.id, status: r.status || 'pending', customer_name: r.customerInfo?.name || r.customerName || '', customer_email: r.customerInfo?.email || r.customerEmail || '', customer_phone: r.customerInfo?.phone || r.customerPhone || '', description: r.printSpecs?.description || r.description || '', file_url: r.attachedFile || r.fileUrl || null, price_estimate: r.pricing?.estimate ?? r.priceEstimate ?? null, admin_notes: r.adminNotes || null });
+  const _rowToCpr  = r => ({ requestId: r.id, id: r.id, status: r.status, customerInfo: { name: r.customer_name, email: r.customer_email, phone: r.customer_phone }, customerName: r.customer_name, customerEmail: r.customer_email, customerPhone: r.customer_phone, description: r.description, fileUrl: r.file_url, priceEstimate: r.price_estimate, adminNotes: r.admin_notes, updatedAt: r.updated_at });
+
+  /* ── Push a known localStorage key's data to its Supabase table ── */
+  async function _pushToSupabase(key, value) {
+    const sb = _client();
+    if (!sb) return;
+    try {
+      if (key === 'b3d_admin_categories') {
+        const rows = _arr(value).map(_catToRow);
+        await sb.from('categories').delete().neq('id', '___never___');
+        if (rows.length) await sb.from('categories').insert(rows);
+      } else if (key === 'b3d_admin_discounts') {
+        const rows = _arr(value).map(_discToRow);
+        await sb.from('discounts').delete().neq('id', '___never___');
+        if (rows.length) await sb.from('discounts').insert(rows);
+      } else if (key === 'b3d_admin_settings') {
+        if (value) await sb.from('settings').upsert({ id: 1, data: value, updated_at: new Date().toISOString() });
+      } else if (key === 'b3d_admin_reviews') {
+        const rows = _arr(value).map(_revToRow);
+        await sb.from('reviews').delete().neq('id', '___never___');
+        if (rows.length) await sb.from('reviews').insert(rows);
+      } else if (key === 'b3d_custom_print_requests') {
+        const rows = _arr(value).map(_cprToRow);
+        await sb.from('custom_print_requests').delete().neq('id', '___never___');
+        if (rows.length) await sb.from('custom_print_requests').insert(rows);
+      }
+    } catch (e) {
+      console.warn('[DB] Supabase push failed for', key, '—', e.message);
+    }
+  }
+
   /* ── localStorage helpers ─────────────────────────────────── */
   const _get = k => {
     try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }
     catch { return null; }
   };
   /**
-   * Write to localStorage.
-   * Throws on failure so every caller automatically surfaces errors —
-   * nothing can silently pretend to save when storage is blocked or full.
+   * Write to localStorage and fire-and-forget sync to Supabase for
+   * known store-data keys (categories, discounts, settings, reviews,
+   * custom_print_requests). Throws on localStorage failure.
    */
   const _set = (k, v) => {
     try {
       localStorage.setItem(k, JSON.stringify(v));
+      // Sync to Supabase in background for cross-device keys
+      if (_configured()) _pushToSupabase(k, v).catch(() => {});
     } catch (e) {
       const msg = e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED'
         ? 'مساحة التخزين ممتلئة — احذف الصور القديمة أو امسح بيانات المتصفح. (Storage full — delete old images or clear browser data.)'
@@ -140,6 +185,35 @@ const DB = (() => {
 
     /** Test whether localStorage is actually available and writable. */
     checkStorage: _checkStorage,
+
+    /**
+     * Preload all Supabase data into localStorage so subsequent sync
+     * reads (getCategories, getDiscounts, etc.) return up-to-date data
+     * on any device. Called automatically on module load when Supabase
+     * is configured; can also be called manually to force a refresh.
+     */
+    async init() {
+      const sb = _client();
+      if (!sb) return;
+      const results = await Promise.allSettled([
+        sb.from('categories').select('*').order('sort_order'),
+        sb.from('discounts').select('*').order('created_at', { ascending: false }),
+        sb.from('settings').select('data').eq('id', 1).maybeSingle(),
+        sb.from('reviews').select('*').order('created_at', { ascending: false }),
+        sb.from('custom_print_requests').select('*').order('created_at', { ascending: false }),
+      ]);
+      const [cats, discs, setts, revs, cprs] = results;
+      if (cats.status  === 'fulfilled' && cats.value.data)
+        try { localStorage.setItem('b3d_admin_categories',      JSON.stringify(cats.value.data.map(_rowToCat)));  } catch {}
+      if (discs.status === 'fulfilled' && discs.value.data)
+        try { localStorage.setItem('b3d_admin_discounts',       JSON.stringify(discs.value.data.map(_rowToDisc))); } catch {}
+      if (setts.status === 'fulfilled' && setts.value.data?.data)
+        try { localStorage.setItem('b3d_admin_settings',        JSON.stringify(setts.value.data.data));            } catch {}
+      if (revs.status  === 'fulfilled' && revs.value.data)
+        try { localStorage.setItem('b3d_admin_reviews',         JSON.stringify(revs.value.data.map(_rowToRev)));   } catch {}
+      if (cprs.status  === 'fulfilled' && cprs.value.data)
+        try { localStorage.setItem('b3d_custom_print_requests', JSON.stringify(cprs.value.data.map(_rowToCpr)));   } catch {}
+    },
 
     /* ══════════════════════════════════════
        PRODUCTS
@@ -682,5 +756,10 @@ const DB = (() => {
   };
 })();
 
-/* Expose globally */
-if (typeof window !== 'undefined') window.DB = DB;
+/* Expose globally and preload Supabase data into localStorage */
+if (typeof window !== 'undefined') {
+  window.DB = DB;
+  // Non-blocking: pulls categories/discounts/settings/reviews from Supabase
+  // into localStorage so every sync read on this device is up-to-date.
+  DB.init().catch(e => console.warn('[DB] init error:', e.message));
+}

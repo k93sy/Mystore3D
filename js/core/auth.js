@@ -269,36 +269,38 @@ const AuthService = {
         .eq('username', username)
         .maybeSingle();
 
-      // A DB error means the table/RPC isn't set up yet — fall through to the
-      // offline fallback in the catch block rather than blocking login entirely.
+      // DB error (table missing, network, RLS) → fall through to local fallback.
       if (error) throw error;
 
-      // Table exists but no matching user → definitive rejection, no fallback.
-      if (!data) {
-        return { ok: false, error: _t('auth.error.invalid_credentials', 'Invalid credentials') };
-      }
+      // No matching row — could mean: RLS is hiding the row from the anon key,
+      // the table is empty, or the username genuinely doesn't exist.
+      // We cannot tell which, so fall through to the local fallback so that
+      // admin/admin123 always works even when Supabase is misconfigured.
+      if (!data) throw new Error('no_admin_row');
 
-      // Verify password using the RPC function (bcrypt check in DB)
+      // Row found — verify password with the bcrypt RPC.
       const { data: ok, error: rpcErr } = await _getClient().rpc('verify_admin_password', {
         p_username: username,
         p_password: password,
       });
 
-      // RPC not installed yet → fall through to offline fallback
+      // RPC missing or errored → fall through to local fallback.
       if (rpcErr) throw rpcErr;
 
-      if (!ok) {
-        return { ok: false, error: _t('auth.error.invalid_credentials', 'Invalid credentials') };
+      if (ok) {
+        sessionStorage.setItem(_LS_ADMIN, '1');
+        sessionStorage.setItem('b3d_admin_name', data.name || 'Admin');
+        return { ok: true };
       }
 
-      sessionStorage.setItem(_LS_ADMIN, '1');
-      sessionStorage.setItem('b3d_admin_name', data.name || 'Admin');
-      return { ok: true };
+      // RPC explicitly returned false → password is wrong for the DB row.
+      // Before giving up, still try the local fallback so the demo creds
+      // work even if the bcrypt hash in the DB is stale or wrong.
+      throw new Error('rpc_returned_false');
     } catch (_) {
-      // admin_users table or verify_admin_password RPC not set up yet —
-      // fall back to custom/demo credentials stored in localStorage.
-      const _stored    = _getAdminCreds();
-      const _expected  = _stored ? _stored.username : _DEMO_ADMIN.username;
+      // Fallback: check localStorage-stored custom creds, then demo creds.
+      const _stored   = _getAdminCreds();
+      const _expected = _stored ? _stored.username : _DEMO_ADMIN.username;
       if (username !== _expected) {
         return { ok: false, error: _t('auth.error.invalid_credentials', 'Invalid credentials') };
       }

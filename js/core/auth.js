@@ -269,15 +269,23 @@ const AuthService = {
         .eq('username', username)
         .maybeSingle();
 
-      if (error || !data) {
+      // A DB error means the table/RPC isn't set up yet — fall through to the
+      // offline fallback in the catch block rather than blocking login entirely.
+      if (error) throw error;
+
+      // Table exists but no matching user → definitive rejection, no fallback.
+      if (!data) {
         return { ok: false, error: _t('auth.error.invalid_credentials', 'Invalid credentials') };
       }
 
       // Verify password using the RPC function (bcrypt check in DB)
-      const { data: ok } = await _getClient().rpc('verify_admin_password', {
+      const { data: ok, error: rpcErr } = await _getClient().rpc('verify_admin_password', {
         p_username: username,
         p_password: password,
       });
+
+      // RPC not installed yet → fall through to offline fallback
+      if (rpcErr) throw rpcErr;
 
       if (!ok) {
         return { ok: false, error: _t('auth.error.invalid_credentials', 'Invalid credentials') };
@@ -287,7 +295,8 @@ const AuthService = {
       sessionStorage.setItem('b3d_admin_name', data.name || 'Admin');
       return { ok: true };
     } catch (_) {
-      // Supabase RPC not set up yet — fall back to custom/demo creds
+      // admin_users table or verify_admin_password RPC not set up yet —
+      // fall back to custom/demo credentials stored in localStorage.
       const _stored    = _getAdminCreds();
       const _expected  = _stored ? _stored.username : _DEMO_ADMIN.username;
       if (username !== _expected) {

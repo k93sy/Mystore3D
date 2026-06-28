@@ -195,12 +195,14 @@ const DB = (() => {
     async init() {
       const sb = _client();
       if (!sb) return;
+      const _withTimeout = (p, ms = 7000) =>
+        Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('sb timeout')), ms))]);
       const results = await Promise.allSettled([
-        sb.from('categories').select('*').order('sort_order'),
-        sb.from('discounts').select('*').order('created_at', { ascending: false }),
-        sb.from('settings').select('data').eq('id', 1).maybeSingle(),
-        sb.from('reviews').select('*').order('created_at', { ascending: false }),
-        sb.from('custom_print_requests').select('*').order('created_at', { ascending: false }),
+        _withTimeout(sb.from('categories').select('*').order('sort_order')),
+        _withTimeout(sb.from('discounts').select('*').order('created_at', { ascending: false })),
+        _withTimeout(sb.from('settings').select('data').eq('id', 1).maybeSingle()),
+        _withTimeout(sb.from('reviews').select('*').order('created_at', { ascending: false })),
+        _withTimeout(sb.from('custom_print_requests').select('*').order('created_at', { ascending: false })),
       ]);
       const [cats, discs, setts, revs, cprs] = results;
       if (cats.status  === 'fulfilled' && cats.value.data)

@@ -3283,10 +3283,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Admin] Awaiting DB.init() …');
     const t0 = Date.now();
     try {
-      await DB.init();
+      const _timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout after 8s')), 8000)
+      );
+      await Promise.race([DB.init(), _timeout]);
       console.log(`[Admin] DB.init() completed in ${Date.now() - t0}ms`);
     } catch (e) {
-      console.error('[Admin] DB.init() failed:', e);
+      console.warn(`[Admin] DB.init() skipped (${e.message}) — rendering with cached data`);
     }
   }
 

@@ -192,29 +192,32 @@ const DB = (() => {
      * on any device. Called automatically on module load when Supabase
      * is configured; can also be called manually to force a refresh.
      */
-    async init() {
+    init() {
+      // Fire Supabase fetch in the background — never blocks the caller.
+      // Admin panel renders immediately from localStorage; data refreshes
+      // silently once the network responds.
       const sb = _client();
-      if (!sb) return;
-      const _withTimeout = (p, ms = 7000) =>
-        Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('sb timeout')), ms))]);
-      const results = await Promise.allSettled([
-        _withTimeout(sb.from('categories').select('*').order('sort_order')),
-        _withTimeout(sb.from('discounts').select('*').order('created_at', { ascending: false })),
-        _withTimeout(sb.from('settings').select('data').eq('id', 1).maybeSingle()),
-        _withTimeout(sb.from('reviews').select('*').order('created_at', { ascending: false })),
-        _withTimeout(sb.from('custom_print_requests').select('*').order('created_at', { ascending: false })),
-      ]);
-      const [cats, discs, setts, revs, cprs] = results;
-      if (cats.status  === 'fulfilled' && cats.value.data)
-        try { localStorage.setItem('b3d_admin_categories',      JSON.stringify(cats.value.data.map(_rowToCat)));  } catch {}
-      if (discs.status === 'fulfilled' && discs.value.data)
-        try { localStorage.setItem('b3d_admin_discounts',       JSON.stringify(discs.value.data.map(_rowToDisc))); } catch {}
-      if (setts.status === 'fulfilled' && setts.value.data?.data)
-        try { localStorage.setItem('b3d_admin_settings',        JSON.stringify(setts.value.data.data));            } catch {}
-      if (revs.status  === 'fulfilled' && revs.value.data)
-        try { localStorage.setItem('b3d_admin_reviews',         JSON.stringify(revs.value.data.map(_rowToRev)));   } catch {}
-      if (cprs.status  === 'fulfilled' && cprs.value.data)
-        try { localStorage.setItem('b3d_custom_print_requests', JSON.stringify(cprs.value.data.map(_rowToCpr)));   } catch {}
+      if (!sb) return Promise.resolve();
+      Promise.allSettled([
+        sb.from('categories').select('*').order('sort_order'),
+        sb.from('discounts').select('*').order('created_at', { ascending: false }),
+        sb.from('settings').select('data').eq('id', 1).maybeSingle(),
+        sb.from('reviews').select('*').order('created_at', { ascending: false }),
+        sb.from('custom_print_requests').select('*').order('created_at', { ascending: false }),
+      ]).then(([cats, discs, setts, revs, cprs]) => {
+        if (cats.status  === 'fulfilled' && cats.value.data)
+          try { localStorage.setItem('b3d_admin_categories',      JSON.stringify(cats.value.data.map(_rowToCat)));  } catch {}
+        if (discs.status === 'fulfilled' && discs.value.data)
+          try { localStorage.setItem('b3d_admin_discounts',       JSON.stringify(discs.value.data.map(_rowToDisc))); } catch {}
+        if (setts.status === 'fulfilled' && setts.value.data?.data)
+          try { localStorage.setItem('b3d_admin_settings',        JSON.stringify(setts.value.data.data));            } catch {}
+        if (revs.status  === 'fulfilled' && revs.value.data)
+          try { localStorage.setItem('b3d_admin_reviews',         JSON.stringify(revs.value.data.map(_rowToRev)));   } catch {}
+        if (cprs.status  === 'fulfilled' && cprs.value.data)
+          try { localStorage.setItem('b3d_custom_print_requests', JSON.stringify(cprs.value.data.map(_rowToCpr)));   } catch {}
+        console.log('[DB] Background sync from Supabase complete');
+      }).catch(e => console.warn('[DB] Background sync error:', e.message));
+      return Promise.resolve();
     },
 
     /* ══════════════════════════════════════

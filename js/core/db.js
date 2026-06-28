@@ -31,10 +31,13 @@ const STORAGE_BUCKET = 'product-images';
    SDK bootstrap (loaded from CDN in HTML)
    ---------------------------------------------------------------- */
 const _sb = (() => {
-  if (typeof supabase !== 'undefined' && supabase.createClient) {
-    return supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  try {
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+      return supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    }
+  } catch (e) {
+    console.warn('[DB] supabase.createClient failed:', e.message);
   }
-  // Not configured yet — db.js is in offline/demo mode
   return null;
 })();
 

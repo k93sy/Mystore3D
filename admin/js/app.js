@@ -3258,40 +3258,20 @@ Sections.settings = {
 window.Admin    = Admin;
 window.Sections = Sections;
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   if (!AuthService.requireAdmin('login.html')) return;
 
-  /* ── Storage smoke-test — catch blocked localStorage before first save ── */
+  /* ── Storage smoke-test ── */
   const _stor = DB.checkStorage();
   if (!_stor.ok) {
-    console.error('❌ [Admin] localStorage is NOT available:', _stor.reason);
     const banner = document.createElement('div');
     banner.style.cssText = 'position:fixed;top:0;inset-inline:0;z-index:9999;background:#ef4444;color:#fff;text-align:center;padding:.6rem 1rem;font-size:.85rem;font-weight:600';
-    banner.textContent = 'تحذير: التخزين المحلي غير متاح في هذا المتصفح — لن يتم حفظ أي بيانات. جرب وضعاً غير خفي أو متصفحاً آخر. (localStorage blocked — saves will not persist.)';
+    banner.textContent = 'تحذير: التخزين المحلي غير متاح — جرب وضعاً غير خفي أو متصفحاً آخر. (localStorage blocked)';
     document.body.prepend(banner);
-  } else {
-    console.log('✅ [Admin] localStorage OK');
   }
 
-  /* ── Supabase preload — MUST finish before Admin.init() renders ──────
-     DB.init() fetches categories/discounts/settings/reviews from Supabase
-     and caches them in localStorage. Without awaiting it here, Admin.init()
-     renders synchronously against empty localStorage every time.           */
-  const sbClient = typeof window !== 'undefined' && window._sbClient;
-  console.log('[Admin] Supabase client:', sbClient ? '✅ initialised' : '❌ null — falling back to localStorage');
-  if (sbClient) {
-    console.log('[Admin] Awaiting DB.init() …');
-    const t0 = Date.now();
-    try {
-      const _timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('timeout after 8s')), 8000)
-      );
-      await Promise.race([DB.init(), _timeout]);
-      console.log(`[Admin] DB.init() completed in ${Date.now() - t0}ms`);
-    } catch (e) {
-      console.warn(`[Admin] DB.init() skipped (${e.message}) — rendering with cached data`);
-    }
-  }
+  // Kick off background Supabase sync — returns immediately, never blocks render.
+  DB.init();
 
   Admin.init();
 });

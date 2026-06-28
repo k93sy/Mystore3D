@@ -97,5 +97,146 @@
 <!-- 4. Admin application -->
 <script src="js/app.js"></script>
 
+<!-- ═══ SUPABASE DEBUG PANEL ═══════════════════════════════════════════
+     Floating button (bottom-right). Click to open/close the panel.
+     Shows live Supabase connection status and lets you run a test write.
+     Remove this block once everything is confirmed working.
+════════════════════════════════════════════════════════════════════════ -->
+<style>
+#sb-debug-btn{position:fixed;bottom:1.2rem;right:1.2rem;z-index:99999;background:#0f172a;color:#fff;border:none;border-radius:999px;padding:.5rem 1rem;font-size:.75rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);letter-spacing:.04em}
+#sb-debug-btn:hover{background:#1e293b}
+#sb-debug-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99998;align-items:flex-end;justify-content:flex-end;padding:1rem}
+#sb-debug-overlay.open{display:flex}
+#sb-debug-box{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:1.25rem 1.4rem;width:420px;max-width:95vw;max-height:80vh;overflow-y:auto;font-family:monospace;font-size:.75rem;line-height:1.65;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#sb-debug-box h3{margin:0 0 .8rem;font-size:.9rem;color:#f8fafc;font-family:sans-serif}
+.sb-row{display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-label{color:#94a3b8}
+.sb-ok{color:#4ade80;font-weight:700}
+.sb-fail{color:#f87171;font-weight:700}
+.sb-warn{color:#fbbf24;font-weight:700}
+#sb-debug-log{margin-top:.8rem;padding:.6rem;background:rgba(255,255,255,.04);border-radius:6px;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;font-size:.7rem;color:#94a3b8}
+#sb-test-btn{margin-top:.8rem;width:100%;padding:.45rem;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:monospace}
+#sb-test-btn:hover{background:#2563eb}
+#sb-refresh-btn{margin-top:.4rem;width:100%;padding:.45rem;background:#059669;color:#fff;border:none;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:monospace}
+#sb-refresh-btn:hover{background:#10b981}
+</style>
+
+<button id="sb-debug-btn" title="Supabase debug panel">⚡ SB Debug</button>
+<div id="sb-debug-overlay">
+  <div id="sb-debug-box">
+    <h3>Supabase Debug Panel</h3>
+    <div id="sb-debug-rows"></div>
+    <div id="sb-debug-log">Click "Run Test" to start…</div>
+    <button id="sb-test-btn">▶ Run Full Test (read + write + delete)</button>
+    <button id="sb-refresh-btn">↻ Re-run DB.init() and refresh panel</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const btn      = document.getElementById('sb-debug-btn');
+  const overlay  = document.getElementById('sb-debug-overlay');
+  const rows     = document.getElementById('sb-debug-rows');
+  const log      = document.getElementById('sb-debug-log');
+  const testBtn  = document.getElementById('sb-test-btn');
+  const refBtn   = document.getElementById('sb-refresh-btn');
+
+  btn.addEventListener('click', () => { overlay.classList.toggle('open'); if (overlay.classList.contains('open')) renderStatus(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+  function tag(ok, yes, no) {
+    return ok
+      ? `<span class="sb-ok">✅ ${yes}</span>`
+      : `<span class="sb-fail">❌ ${no}</span>`;
+  }
+  function row(label, val) {
+    return `<div class="sb-row"><span class="sb-label">${label}</span><span>${val}</span></div>`;
+  }
+
+  function renderStatus() {
+    const sb = window._sbClient;
+    const url = (typeof SUPABASE_URL !== 'undefined') ? SUPABASE_URL : '(not in scope)';
+    const key = (typeof SUPABASE_ANON !== 'undefined') ? SUPABASE_ANON.slice(0, 20) + '…' : '(not in scope)';
+    const clientOk = !!(sb && typeof sb.from === 'function');
+
+    rows.innerHTML = [
+      row('window._sbClient',    tag(sb,        'exists',  'null / undefined')),
+      row('.from() callable',    tag(clientOk,  'yes',     'NO — client broken')),
+      row('SUPABASE_URL',        `<span style="color:#7dd3fc">${url}</span>`),
+      row('SUPABASE_ANON (prefix)', `<span style="color:#7dd3fc">${key}</span>`),
+      row('_configured() result',tag(clientOk,  'TRUE → Supabase active', 'FALSE → localStorage fallback')),
+      row('Categories in LS',    `<span class="sb-warn">${(()=>{try{const v=JSON.parse(localStorage.getItem('b3d_admin_categories')||'[]');return v.length+' rows';}catch{return 'parse error';}})()}</span>`),
+      row('Settings in LS',      `<span class="sb-warn">${(()=>{try{const v=localStorage.getItem('b3d_admin_settings');return v?'present ('+Math.round(v.length/1024*100)/100+' KB)':'empty';}catch{return 'error';}})()}</span>`),
+      row('Discounts in LS',     `<span class="sb-warn">${(()=>{try{const v=JSON.parse(localStorage.getItem('b3d_admin_discounts')||'[]');return v.length+' rows';}catch{return 'parse error';}})()}</span>`),
+    ].join('');
+  }
+
+  async function appendLog(msg, cls='') {
+    const ts = new Date().toISOString().split('T')[1].slice(0,12);
+    log.textContent += `[${ts}] ${msg}\n`;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  testBtn.addEventListener('click', async () => {
+    testBtn.disabled = true;
+    log.textContent = '';
+    const sb = window._sbClient;
+
+    if (!sb || typeof sb.from !== 'function') {
+      appendLog('❌ No Supabase client. window._sbClient is: ' + JSON.stringify(sb));
+      testBtn.disabled = false;
+      return;
+    }
+    appendLog('✅ Supabase client found');
+
+    // READ products
+    const { data: prods, error: pe } = await sb.from('products').select('id').limit(1);
+    appendLog(pe ? '❌ READ products: ' + pe.message : '✅ READ products: ' + JSON.stringify(prods));
+
+    // READ settings
+    const { data: setts, error: se } = await sb.from('settings').select('*').eq('id', 1).maybeSingle();
+    appendLog(se ? '❌ READ settings: ' + se.message : '✅ READ settings: ok (' + JSON.stringify(setts?.data).slice(0,60) + '…)');
+
+    // READ categories
+    const { data: cats, error: ce } = await sb.from('categories').select('*').limit(5);
+    appendLog(ce ? '❌ READ categories: ' + ce.message : '✅ READ categories: ' + (cats?.length||0) + ' rows');
+
+    // WRITE test category
+    const testId = 'debug-test-' + Date.now();
+    const { error: we } = await sb.from('categories').insert({ id: testId, name_en: 'Debug Test', name_ar: 'اختبار', icon: '🔧', sort_order: 999 });
+    appendLog(we ? '❌ WRITE categories: ' + we.message : '✅ WRITE categories: inserted ' + testId);
+
+    // DELETE test category
+    if (!we) {
+      const { error: de } = await sb.from('categories').delete().eq('id', testId);
+      appendLog(de ? '❌ DELETE test row: ' + de.message : '✅ DELETE test row: cleaned up');
+    }
+
+    // WRITE settings
+    const { error: swe } = await sb.from('settings').upsert({ id: 1, data: { _debugTest: true }, updated_at: new Date().toISOString() });
+    appendLog(swe ? '❌ WRITE settings: ' + swe.message : '✅ WRITE settings: upsert ok');
+
+    appendLog('— Test complete —');
+    testBtn.disabled = false;
+    renderStatus();
+  });
+
+  refBtn.addEventListener('click', async () => {
+    refBtn.disabled = true;
+    log.textContent = '';
+    appendLog('Running DB.init()…');
+    const t0 = Date.now();
+    try {
+      await DB.init();
+      appendLog('✅ DB.init() done in ' + (Date.now()-t0) + 'ms');
+    } catch (e) {
+      appendLog('❌ DB.init() threw: ' + e.message);
+    }
+    renderStatus();
+    refBtn.disabled = false;
+  });
+})();
+</script>
+
 </body>
 </html>

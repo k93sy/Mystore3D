@@ -18,16 +18,13 @@
 'use strict';
 
 /* ----------------------------------------------------------------
-   CONFIGURATION — credentials loaded from js/core/config.js
-   (gitignored). Fallback strings keep offline/demo mode working
-   when config.js is absent.
+   CONFIGURATION — Supabase project credentials
+   The anon/publishable key is safe to commit: it is a public key
+   intentionally embedded in browser code. Security is enforced by
+   Row Level Security policies in the database, not by hiding this key.
    ---------------------------------------------------------------- */
-const SUPABASE_URL  = (typeof window !== 'undefined' && window.SUPABASE_URL)
-  ? window.SUPABASE_URL
-  : 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON = (typeof window !== 'undefined' && window.SUPABASE_ANON_KEY)
-  ? window.SUPABASE_ANON_KEY
-  : 'YOUR_ANON_PUBLIC_KEY';
+const SUPABASE_URL  = 'https://rrjcsbsatglxxpyqyrnt.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_z_EkZ7XJnlh8wxSChotqYw_RfxWRcEq';
 const STORAGE_BUCKET = 'product-images';
 
 /* ----------------------------------------------------------------

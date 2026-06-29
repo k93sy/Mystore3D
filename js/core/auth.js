@@ -483,7 +483,12 @@ const AuthService = {
         .select('*')
         .eq('id', data.user.id)
         .maybeSingle();
-      return { ...data.user, ...profile };
+      // Resolve phone: profile row wins, then registration metadata, then OTP auth phone.
+      const resolvedPhone = profile?.phone
+        || data.user.user_metadata?.phone
+        || data.user.phone
+        || null;
+      return { ...data.user, ...profile, phone: resolvedPhone };
     }
 
     // ── Local mode: always re-read from the source of truth ──────

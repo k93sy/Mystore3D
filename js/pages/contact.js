@@ -167,7 +167,7 @@ const ContactPage = {
   },
 
   initForm() {
-    const form = document.getElementById('contactForm');
+    const form    = document.getElementById('contactForm');
     const success = document.getElementById('contactSuccess');
     if (!form) return;
 
@@ -179,13 +179,69 @@ const ContactPage = {
       btn.classList.add('btn--loading');
       btn.disabled = true;
 
-      // Simulate send
-      await new Promise(r => setTimeout(r, 1800));
+      const s   = this._getSettings();
+      const key = s.contactFormKey || '';
+      const ar  = (App?.lang || localStorage.getItem('b3d_lang') || 'ar') === 'ar';
 
-      btn.classList.remove('btn--loading');
-      btn.disabled = false;
-      form.style.display = 'none';
-      if (success) success.classList.add('show');
+      if (!key) {
+        // No Web3Forms key configured — show a clear error rather than silently failing.
+        btn.classList.remove('btn--loading');
+        btn.disabled = false;
+        const errBanner = document.getElementById('contactFormError');
+        if (errBanner) {
+          errBanner.textContent = ar
+            ? 'خدمة الإرسال غير مهيأة. يرجى التواصل معنا مباشرة عبر البريد الإلكتروني.'
+            : 'Contact form is not configured yet. Please reach us directly by email.';
+          errBanner.style.display = 'block';
+        }
+        return;
+      }
+
+      try {
+        const payload = {
+          access_key: key,
+          subject: (document.getElementById('contactSubject')?.value || (ar ? 'رسالة من نموذج التواصل' : 'Contact Form Message')),
+          name:    document.getElementById('contactName')?.value    || '',
+          email:   document.getElementById('contactEmail')?.value   || '',
+          phone:   document.getElementById('contactPhone')?.value   || '',
+          message: document.getElementById('contactMessage')?.value || '',
+          // Prevent spam bots from reading the honeypot
+          botcheck: '',
+        };
+
+        const res  = await fetch('https://api.web3forms.com/submit', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body:    JSON.stringify(payload),
+        });
+        const json = await res.json();
+
+        btn.classList.remove('btn--loading');
+        btn.disabled = false;
+
+        if (json.success) {
+          form.style.display = 'none';
+          if (success) success.classList.add('show');
+        } else {
+          const errBanner = document.getElementById('contactFormError');
+          if (errBanner) {
+            errBanner.textContent = ar
+              ? 'حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى.'
+              : 'Something went wrong. Please try again.';
+            errBanner.style.display = 'block';
+          }
+        }
+      } catch (_err) {
+        btn.classList.remove('btn--loading');
+        btn.disabled = false;
+        const errBanner = document.getElementById('contactFormError');
+        if (errBanner) {
+          errBanner.textContent = ar
+            ? 'تعذّر الاتصال بخدمة الإرسال. تحقق من اتصالك بالإنترنت وحاول مجدداً.'
+            : 'Could not reach the sending service. Check your connection and try again.';
+          errBanner.style.display = 'block';
+        }
+      }
     });
   },
 

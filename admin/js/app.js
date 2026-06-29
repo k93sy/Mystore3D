@@ -2933,6 +2933,22 @@ Sections.settings = {
               </div>
             </div>
 
+            <!-- Contact form recipient -->
+            <div style="margin-top:1.5rem;padding:1.1rem 1.25rem;background:rgba(0,194,255,.05);border:1px solid rgba(0,194,255,.18);border-radius:12px">
+              <p style="font-size:.75rem;font-weight:700;color:var(--txt-m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">${ar?'استلام رسائل نموذج التواصل':'Contact Form Recipient'}</p>
+              <p style="font-size:.78rem;color:var(--txt-m);margin-bottom:.9rem;line-height:1.6">
+                ${ar
+                  ? 'أدخل مفتاح Web3Forms لاستلام رسائل النموذج على بريدك. احصل على مفتاحك المجاني من <a href="https://web3forms.com" target="_blank" style="color:var(--acc)">web3forms.com</a> — عنوان بريدك لن يظهر للزوار أبداً.'
+                  : 'Enter your Web3Forms access key to receive contact form messages. Get a free key at <a href="https://web3forms.com" target="_blank" style="color:var(--acc)">web3forms.com</a> — your email address is never exposed to visitors.'}
+              </p>
+              <div class="adm-form-group" style="margin-bottom:0">
+                <label class="adm-label">${ar?'مفتاح Web3Forms (Access Key)':'Web3Forms Access Key'}</label>
+                <input class="adm-input" id="sContactFormKey" type="text"
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  value="${esc(s.contactFormKey||'')}">
+              </div>
+            </div>
+
             <!-- Social media rows -->
             <p style="font-size:.75rem;font-weight:600;color:var(--txt-m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem">${ar?'حسابات التواصل الاجتماعي':'Social Media Accounts'}</p>
             <div style="display:flex;flex-direction:column;gap:.85rem">
@@ -3128,6 +3144,7 @@ Sections.settings = {
           contactPhone:    document.getElementById('sContactPhone').value.trim(),
           contactEmail:    document.getElementById('sContactEmail').value.trim(),
           workingHours:    document.getElementById('sWorkingHours').value.trim(),
+          contactFormKey:  document.getElementById('sContactFormKey').value.trim(),
           socialWhatsapp:  document.getElementById('sSocialWhatsapp').value.trim(),
           socialInstagram: document.getElementById('sSocialInstagram').value.trim(),
           socialX:         document.getElementById('sSocialX').value.trim(),

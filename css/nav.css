@@ -751,7 +751,7 @@
 [dir="rtl"] .account-menu {
   inset-inline-end: auto;
   inset-inline-start: 0;
-  transform: translateX(-100%);
+  transform: translateX(100%);
 }
 .account-menu.open {
   visibility: visible;

@@ -132,22 +132,46 @@ const AuthService = {
     if (!_authConfigured()) {
       return this._localSignUp(email, password, meta);
     }
-    const { data, error } = await _getClient().auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name:      meta.firstName ? (meta.firstName + (meta.lastName ? ' ' + meta.lastName : '')) : (meta.nameEn || ''),
-          first_name:     meta.firstName || meta.nameEn || '',
-          last_name:      meta.lastName  || meta.nameAr || '',
-          phone:          meta.phone || '',
-          preferred_lang: meta.lang || localStorage.getItem('b3d_lang') || 'ar',
+    try {
+      const { data, error } = await _getClient().auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name:      meta.firstName ? (meta.firstName + (meta.lastName ? ' ' + meta.lastName : '')) : (meta.nameEn || ''),
+            first_name:     meta.firstName || meta.nameEn || '',
+            last_name:      meta.lastName  || meta.nameAr || '',
+            phone:          meta.phone || '',
+            preferred_lang: meta.lang || localStorage.getItem('b3d_lang') || 'ar',
+          },
+          emailRedirectTo: window.location.origin + '/pages/login.html',
         },
-        emailRedirectTo: window.location.origin + '/pages/login.html',
-      },
-    });
-    if (error) return { ok: false, error: this._mapError(error) };
-    return { ok: true, user: data.user, session: data.session };
+      });
+
+      if (error) {
+        // If the error is "email already registered" we must NOT fall back to local,
+        // because the account already exists in Supabase.
+        const msg = (error.message || '').toLowerCase();
+        if (msg.includes('already') || msg.includes('unique')) {
+          return { ok: false, error: _t('auth.error.email_taken') };
+        }
+        // Any other Supabase error (SMTP not configured, signups disabled, etc.)
+        // — fall through to local account creation so the user can still register.
+        console.warn('[AuthService] Supabase signUp failed:', error.message, '— using local fallback');
+        return this._localSignUp(email, password, meta);
+      }
+
+      // Signup succeeded but email confirmation is required (session is null).
+      // Return a special flag so the UI can tell the user to check their inbox.
+      if (data?.user && !data?.session) {
+        return { ok: true, user: data.user, session: null, confirmEmail: true };
+      }
+
+      return { ok: true, user: data.user, session: data.session };
+    } catch (e) {
+      console.warn('[AuthService] signUpEmail threw:', e.message, '— using local fallback');
+      return this._localSignUp(email, password, meta);
+    }
   },
 
   /* ---- Email / Password sign-in ---- */

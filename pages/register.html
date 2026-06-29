@@ -188,6 +188,7 @@
       lblGoogle:'Google',lblApple:'Apple',
       successTitle:'تم إنشاء حسابك!',
       successDesc:'تحقق من بريدك الإلكتروني لتأكيد حسابك.',
+      successDescLocal:'حسابك جاهز! يمكنك تسجيل الدخول الآن.',
       successBtn:'تسجيل الدخول',
       errRequired:'مطلوب',errPhone:'يرجى إدخال رقم جوال سعودي صحيح (مثال: 5XXXXXXXX)',
       errEmail:'بريد إلكتروني غير صالح',
@@ -209,6 +210,7 @@
       lblGoogle:'Google',lblApple:'Apple',
       successTitle:'Account Created!',
       successDesc:'Check your email to confirm your account.',
+      successDescLocal:'Your account is ready! You can sign in now.',
       successBtn:'Sign In',
       errRequired:'Required',errPhone:'Enter a valid Saudi mobile number (e.g. 5XXXXXXXX)',
       errEmail:'Invalid email address',
@@ -292,6 +294,12 @@
     btn.classList.remove('btn--loading'); btn.disabled = false;
 
     if (!res.ok) { showBanner(res.error); return; }
+
+    // Show appropriate success message depending on whether email confirmation is needed.
+    const descEl = $('successDesc');
+    if (descEl) {
+      descEl.textContent = res.confirmEmail ? t('successDesc') : t('successDescLocal');
+    }
 
     /* Carry ?next= into the successBtn "Sign In" link so the full round-trip
        completes: Product → add-to-cart → login prompt → Register → login → back. */

@@ -476,7 +476,12 @@ const AccountMenu = {
     this._overlay.setAttribute('aria-hidden', 'true');
     this._overlay.addEventListener('click', () => this.close());
     document.body.appendChild(this._overlay);
-    document.body.style.overflow = 'hidden';
+
+    // iOS-safe scroll lock: save position then fix the body in place
+    this._scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${this._scrollY}px`;
+    document.body.style.width = '100%';
 
     // Close button
     document.getElementById('accountMenuClose')
@@ -491,7 +496,16 @@ const AccountMenu = {
   close() {
     this._panel?.classList.remove('open');
     if (this._overlay) { this._overlay.remove(); this._overlay = null; }
-    document.body.style.overflow = '';
+
+    // Restore scroll position
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    if (this._scrollY !== undefined) {
+      window.scrollTo(0, this._scrollY);
+      this._scrollY = undefined;
+    }
+
     if (this._onKey) { document.removeEventListener('keydown', this._onKey); this._onKey = null; }
   },
 

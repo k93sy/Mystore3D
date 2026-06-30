@@ -362,8 +362,6 @@
   position: fixed;
   inset: 0;
   background: rgba(10,10,15,0.4);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
   z-index: var(--z-overlay);
   animation: fadeIn var(--dur-normal) var(--ease-out);
 }
@@ -817,6 +815,7 @@
 .account-menu__nav {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--space-3) var(--space-2);
 }
 .account-menu__nav::-webkit-scrollbar { width: 3px; }

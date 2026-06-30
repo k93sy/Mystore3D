@@ -47,6 +47,9 @@ const ContactPage = {
         contactPhone:    '+966 55 123 4567',
         contactEmail:    'hello@balance3d.sa',
         workingHours:    'السبت – الخميس، 9 ص – 6 م',
+        phoneLink:       '',
+        emailLink:       '',
+        mapLink:         '',
         socialWhatsapp:  '', socialInstagram: '', socialX:        '',
         socialLinkedin:  '', socialSnapchat:  '', socialTiktok:   '', socialYoutube: '',
         showWhatsapp: true, showInstagram: true, showX:       true,
@@ -103,8 +106,23 @@ const ContactPage = {
       mapEl.textContent = s.contactAddress + (s.addressDetail ? ' — ' + s.addressDetail : '');
     }
 
+    /* Clickable cards */
+    this._wireCardLink('phoneCard', s.phoneLink || ('tel:' + (s.contactPhone || '').replace(/\s/g, '')));
+    this._wireCardLink('emailCard', s.emailLink || ('mailto:' + (s.contactEmail || '')));
+    this._wireCardLink('mapCard',   s.mapLink   || ('https://maps.google.com/?q=' + encodeURIComponent((s.contactAddress || '') + ' ' + (s.addressDetail || ''))));
+
     /* Social links */
     this._renderSocialLinks(s);
+  },
+
+  _wireCardLink(id, href) {
+    const card = document.getElementById(id);
+    if (!card || !href) return;
+    card.addEventListener('click', (e) => {
+      /* Don't double-fire if user clicked an <a> inside the card */
+      if (e.target.closest('a')) return;
+      window.open(href, '_blank', 'noopener,noreferrer');
+    });
   },
 
   _renderSocialLinks(s) {

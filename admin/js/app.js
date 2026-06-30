@@ -2933,6 +2933,26 @@ Sections.settings = {
               </div>
             </div>
 
+            <!-- Clickable card links -->
+            <div style="margin-top:1.5rem;padding:1.1rem 1.25rem;background:rgba(0,194,255,.05);border:1px solid rgba(0,194,255,.18);border-radius:12px">
+              <p style="font-size:.75rem;font-weight:700;color:var(--txt-m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">${ar?'روابط بطاقات التواصل (اختياري)':'Info Card Links (optional)'}</p>
+              <p style="font-size:.78rem;color:var(--txt-m);margin-bottom:.9rem;line-height:1.6">${ar?'إذا تُركت فارغة، تُستخدم الروابط الافتراضية (tel: / mailto: / خرائط Google).':'If left blank, sensible defaults are used (tel: / mailto: / Google Maps).'}</p>
+              <div class="adm-form-grid">
+                <div class="adm-form-group">
+                  <label class="adm-label">${ar?'رابط الهاتف (tel: أو WhatsApp)':'Phone Link (tel: or WhatsApp)'}</label>
+                  <input class="adm-input" id="sPhoneLink" type="url" placeholder="tel:+966551234567" value="${esc(s.phoneLink||'')}">
+                </div>
+                <div class="adm-form-group">
+                  <label class="adm-label">${ar?'رابط البريد الإلكتروني':'Email Link'}</label>
+                  <input class="adm-input" id="sEmailLink" type="url" placeholder="mailto:hello@example.com" value="${esc(s.emailLink||'')}">
+                </div>
+                <div class="adm-form-group adm-form-full">
+                  <label class="adm-label">${ar?'رابط الخريطة':'Map Link'}</label>
+                  <input class="adm-input" id="sMapLink" type="url" placeholder="https://maps.google.com/?q=..." value="${esc(s.mapLink||'')}">
+                </div>
+              </div>
+            </div>
+
             <!-- Contact form recipient -->
             <div style="margin-top:1.5rem;padding:1.1rem 1.25rem;background:rgba(0,194,255,.05);border:1px solid rgba(0,194,255,.18);border-radius:12px">
               <p style="font-size:.75rem;font-weight:700;color:var(--txt-m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">${ar?'استلام رسائل نموذج التواصل':'Contact Form Recipient'}</p>
@@ -3145,6 +3165,9 @@ Sections.settings = {
           contactEmail:    document.getElementById('sContactEmail').value.trim(),
           workingHours:    document.getElementById('sWorkingHours').value.trim(),
           contactFormKey:  document.getElementById('sContactFormKey').value.trim(),
+          phoneLink:       document.getElementById('sPhoneLink').value.trim(),
+          emailLink:       document.getElementById('sEmailLink').value.trim(),
+          mapLink:         document.getElementById('sMapLink').value.trim(),
           socialWhatsapp:  document.getElementById('sSocialWhatsapp').value.trim(),
           socialInstagram: document.getElementById('sSocialInstagram').value.trim(),
           socialX:         document.getElementById('sSocialX').value.trim(),

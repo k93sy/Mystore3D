@@ -454,11 +454,12 @@ const AccountPage = {
     _lang = (typeof App !== 'undefined' ? App.lang : null) ||
             localStorage.getItem('b3d_lang') || 'ar';
 
-    // Auth guard
+    // Auth guard — include hash in ?next so deep links survive login redirect
     if (typeof AuthService !== 'undefined') {
       const session = await AuthService.getSession();
       if (!session) {
-        window.location.href = 'login.html?next=account.html';
+        const dest = 'account.html' + window.location.hash;
+        window.location.href = 'login.html?next=' + encodeURIComponent(dest);
         return;
       }
       try { _user = await AuthService.getUser(); } catch (_) {}
@@ -474,10 +475,10 @@ const AccountPage = {
     this._initSettings();
     this._initLogout();
 
-    // Navigate to section from URL hash
+    // Navigate to section from URL hash (defer one frame so layout is stable)
     const hash = window.location.hash.replace('#', '');
     if (hash && $('section-' + hash)) {
-      this._showSection(hash);
+      requestAnimationFrame(() => this._showSection(hash));
     }
 
     // Lazy-load data sections on first activation

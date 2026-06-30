@@ -466,7 +466,19 @@ const AuthService = {
   async getSession() {
     if (_authConfigured()) {
       const { data } = await _getClient().auth.getSession();
-      return data.session;
+      if (data.session) return data.session;
+
+      // If Supabase returned null but there is a stored auth token, the client
+      // may still be mid-refresh (common on mobile where JS is slower).
+      // Wait one tick and retry before treating the user as logged-out.
+      const hasStoredToken = Object.keys(localStorage)
+        .some(k => k.startsWith('sb-') && k.includes('auth-token'));
+      if (hasStoredToken) {
+        await new Promise(r => setTimeout(r, 500));
+        const { data: data2 } = await _getClient().auth.getSession();
+        return data2.session ?? null;
+      }
+      return null;
     }
     const s = _localGetSession();
     return (s?.type === 'email_session' || s?.type === 'phone_session') ? s : null;
